@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vue3</title>
+</head>
+<body>
+    <div id="text"></div>
+
+    <script src="./proxy.js"></script>
+    <script>
+        const response = {
+            text : "修改前"
+        }
+        buildResponsiveProxy(response)
+        
+        effect(() => {
+            document.getElementById('text').innerHTML = response.text
+        })
+        
+
+        setTimeout(() => {
+            response.text = "修改后",
+            console.log(response.text);
+        }, 3000)
+    </script>
+</body>
+</html>

@@ -1,5 +1,7 @@
 // 为了规范 effect副作用函数的命名，因为依赖的函数命名很多种，用activeEffect接收effect中的依赖函数
 let activeEffect;
+// effect 栈 : 解决的是effect函数嵌套的情况，activeEffect指向不对
+const effectStack = [];
 // 用来收集对应的对象
 let objWeakMap = new WeakMap()
 
@@ -13,11 +15,19 @@ function effect(fn) {
         // 调用 cleanup 函数完成清除工作
         cleanup(effectFn)
 
+        // 当调用 effect 注册副作用函数时，将副作用函数复制给 activeEffect
         activeEffect = effectFn;
+        // 在调用副作用函数之前将当前副作用函数压入栈中
+        effectStack.push(effectFn)
         fn()
+        // 在当前副作用函数执行完毕后，将当前副作用函数弹出栈，并把activeEffect 还原为之前的值
+        effectStack.pop()
+        activeEffect = effectStack[effectStack.length - 1]
     }
 
+    // activeEffect.deps 用来存储所有与该副作用函数相关的依赖集合
     effectFn.deps = []
+    // 执行副作用函数
     effectFn()
 }
 

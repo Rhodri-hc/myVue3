@@ -9,10 +9,34 @@ let objWeakMap = new WeakMap()
 * @date 2022年06月06日 09:59:48
 */
 function effect(fn) {
-    activeEffect = fn;
-    fn()
+    const effectFn = () => {
+        // 调用 cleanup 函数完成清除工作
+        cleanup(effectFn)
+
+        activeEffect = effectFn;
+        fn()
+    }
+
+    effectFn.deps = []
+    effectFn()
 }
 
+/**
+* @desc 将副作用函数的每一项依赖集合移除
+* @author 张和潮
+* @date 2022年06月07日 09:42:35
+*/
+function cleanup(effectFn){
+    // 遍历effectFn.deps 数组
+    for (let i = 0; i < effectFn.deps.length; i++) {
+        // deps 是依赖集合
+        const deps = effectFn.deps[i];
+        // 将effectFn 从依赖集合中移除
+        deps.delete(effectFn)
+    }
+    // 最后需要重置 effectFn.deps 数组
+    effectFn.deps.length = 0;
+}
 
 /**
 * @desc 建立一个响应式系统的代理
@@ -70,6 +94,9 @@ function track(target, key){
     // 往key值对应的依赖桶中添加当前的依赖函数
     deps.add(activeEffect)
 
+    // deps 就是一个与当前副作用函数存在联系的依赖集合
+    // 将其添加到 activeEffect.deps 数组中
+    activeEffect.deps.push(deps)
 }
 
 /**
@@ -79,14 +106,16 @@ function track(target, key){
 */
 function trigger(target,key){
        // 获取桶里 target 对应的对象
-       let bucketObjMap = objWeakMap.get(target)
+       const bucketObjMap = objWeakMap.get(target)
 
        if (!bucketObjMap) {
            return;
        }
        // 获取target桶里的 key 对象
-       let effects = bucketObjMap.get(key)
-
+       const effects = bucketObjMap.get(key)
+       
+       // 构造另一 Set集合遍历他，避免无限执行
+       const effectsToRun = new Set(effects)
        // 执行key值中对应的 依赖函数
-       effects && effects.forEach(fn => fn());
+       effectsToRun && effectsToRun.forEach(fn => fn());
 }

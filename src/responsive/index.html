@@ -12,17 +12,19 @@
     <script src="./proxy.js"></script>
     <script>
         const response = {
+            flag: true,
             text : "修改前"
         }
         const proxyData =  buildResponsiveProxy(response)
         
         effect(() => {
-            document.getElementById('text').innerHTML = proxyData.text
+            const showText = proxyData.flag ?  proxyData.text : "哎呀，flag是false"
+            document.getElementById('text').innerText = showText
         })
         
 
         setTimeout(() => {
-            proxyData.text = "修改后",
+            proxyData.flag = false;
             console.log(proxyData.text);
         }, 3000)
     </script>

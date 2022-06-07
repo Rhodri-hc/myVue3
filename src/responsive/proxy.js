@@ -5,12 +5,46 @@ const effectStack = [];
 // 用来收集对应的对象
 let objWeakMap = new WeakMap()
 
+/**  $nextTick 的类似实现   */
+// 定义一个任务队列
+const jobQueue = new Set();
+// 使用Promise.resolve() 创建一个promise 实例，我们用它将一个任务添加到微任务队列
+const p = Promise.resolve()
+
+// 一个标志代表是否正在刷新队列
+let isFlushing = false;
+/**
+* @desc 刷新队列
+* @author 张和潮
+* @date 2022年06月07日 22:30
+*/
+function flushJob(){
+    // 如果队列正在刷新，则什么都不做
+    if (isFlushing) {
+        return;
+    }
+    // 设置为 true 代表正在刷新
+    isFlushing  = true;
+    // 在微任务队列中刷新jobQueue队列
+    p.then(() => {
+        jobQueue.forEach(job => job())
+    }).finally(() => {
+        // 结束后重置 isFlushing
+        isFlushing = false
+    })
+
+}
+
+/**  $nextTick 的类似实现   */
+
 /**
 * @desc 副作用函数，用来接收执行依赖函数
+* @params { Function } fn 副作用函数
+* @params { Object } options 调度执行选项
 * @author 张和潮
 * @date 2022年06月06日 09:59:48
 */
-function effect(fn) {
+function effect(fn, options = {}) {
     const effectFn = () => {
         // 调用 cleanup 函数完成清除工作
         cleanup(effectFn)
@@ -25,6 +59,8 @@ function effect(fn) {
         activeEffect = effectStack[effectStack.length - 1]
     }
 
+    // 将 options 挂载到 effectFn 上
+    effectFn.options = options;
     // activeEffect.deps 用来存储所有与该副作用函数相关的依赖集合
     effectFn.deps = []
     // 执行副作用函数
@@ -133,5 +169,12 @@ function trigger(target,key){
            }
        })
        // 执行key值中对应的 依赖函数
-       effectsToRun && effectsToRun.forEach(fn => fn());
+       effectsToRun && effectsToRun.forEach(fn => {
+           // 如果副作用函数存在调度器，则调用该调度器，并将副作用函数函数作为参数传递
+           if (fn.options.scheduler) {
+               fn.options.scheduler(fn)
+           } else{
+               fn()
+           }
+       });
 }

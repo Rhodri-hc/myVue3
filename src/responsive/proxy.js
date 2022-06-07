@@ -125,7 +125,13 @@ function trigger(target,key){
        const effects = bucketObjMap.get(key)
        
        // 构造另一 Set集合遍历他，避免无限执行
-       const effectsToRun = new Set(effects)
+       const effectsToRun = new Set()
+       effects && effects.forEach(effectFn => {
+           // 如果trigger 触发执行的副作用函数与当前只在执行的 副作用函数相同，则不粗发执行
+           if(effectFn !== activeEffect){
+               effectsToRun.add(effectFn)
+           }
+       })
        // 执行key值中对应的 依赖函数
        effectsToRun && effectsToRun.forEach(fn => fn());
 }

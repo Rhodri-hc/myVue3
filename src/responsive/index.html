@@ -14,16 +14,16 @@
         const response = {
             text : "修改前"
         }
-        buildResponsiveProxy(response)
+        const proxyData =  buildResponsiveProxy(response)
         
         effect(() => {
-            document.getElementById('text').innerHTML = response.text
+            document.getElementById('text').innerHTML = proxyData.text
         })
         
 
         setTimeout(() => {
-            response.text = "修改后",
-            console.log(response.text);
+            proxyData.text = "修改后",
+            console.log(proxyData.text);
         }, 3000)
     </script>
 </body>

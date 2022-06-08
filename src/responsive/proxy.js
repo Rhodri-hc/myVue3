@@ -34,7 +34,6 @@ function flushJob(){
     })
 
 }
-
 /**  $nextTick 的类似实现   */
 
 /**
@@ -53,18 +52,26 @@ function effect(fn, options = {}) {
         activeEffect = effectFn;
         // 在调用副作用函数之前将当前副作用函数压入栈中
         effectStack.push(effectFn)
-        fn()
+        // 将fn 副作用函数的执行结果保存到res中返回
+        const res =  fn()
         // 在当前副作用函数执行完毕后，将当前副作用函数弹出栈，并把activeEffect 还原为之前的值
         effectStack.pop()
         activeEffect = effectStack[effectStack.length - 1]
+
+        return res;
     }
 
     // 将 options 挂载到 effectFn 上
     effectFn.options = options;
     // activeEffect.deps 用来存储所有与该副作用函数相关的依赖集合
     effectFn.deps = []
-    // 执行副作用函数
-    effectFn()
+
+    // 表示不是计算属性或者watch，则计算
+    if (!options.lazy) {
+        effectFn()
+    }
+    // 返回副作用函数
+    return effectFn
 }
 
 /**

@@ -10,29 +10,44 @@
     <div id="text"></div>
 
     <script src="./proxy.js"></script>
+    <script src="./computed.js"></script>
     <script>
-        const response = {
-            foo: 1
-        }
-        const proxyData =  buildResponsiveProxy(response)
+        // const response = {
+        //     foo: 1
+        // }
+        // const proxyData =  buildResponsiveProxy(response)
+        
+        // effect(() => {
+        //     console.log(proxyData.foo);
+        // }, {
+        //     scheduler(fn){
+        //         // 每次调度时，将副作用函数添加到jobQueue队列中
+        //         jobQueue.add(fn);
+        //         // 调用flushJob 刷新队列
+        //         flushJob()
+        //     }
+        // })
+        
+        
+        // proxyData.foo++
+        // proxyData.foo++
+        // proxyData.foo++
+        
+        // console.log("依赖收集完成");
+
+        // 计算属性
+        const data = { foo: 1, bar: 2 };
+        const obj = buildResponsiveProxy(data)
+
+        const sumRes = computed(() => obj.foo + obj.bar)
+
+        // console.log("不在effect内", sumRes.value);
         
         effect(() => {
-            console.log(proxyData.foo);
-        }, {
-            scheduler(fn){
-                // 每次调度时，将副作用函数添加到jobQueue队列中
-                jobQueue.add(fn);
-                // 调用flushJob 刷新队列
-                flushJob()
-            }
+            console.log(sumRes.value);
         })
-        
-        
-        proxyData.foo++
-        proxyData.foo++
-        proxyData.foo++
-        
-        console.log("依赖收集完成");
+        // 修改obj.foo 值
+        obj.foo++;
        
     </script>
 </body>

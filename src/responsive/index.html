@@ -11,6 +11,7 @@
 
     <script src="./proxy.js"></script>
     <script src="./computed.js"></script>
+    <script src="./watch.js"></script>
     <script>
         // const response = {
         //     foo: 1
@@ -36,18 +37,29 @@
         // console.log("依赖收集完成");
 
         // 计算属性
-        const data = { foo: 1, bar: 2 };
-        const obj = buildResponsiveProxy(data)
+        // const data = { foo: 1, bar: 2 };
+        // const obj = buildResponsiveProxy(data)
 
-        const sumRes = computed(() => obj.foo + obj.bar)
+        // const sumRes = computed(() => obj.foo + obj.bar)
 
-        // console.log("不在effect内", sumRes.value);
+        // // console.log("不在effect内", sumRes.value);
         
-        effect(() => {
-            console.log(sumRes.value);
-        })
-        // 修改obj.foo 值
-        obj.foo++;
+        // effect(() => {
+        //     console.log(sumRes.value);
+        // })
+        // // 修改obj.foo 值
+        // obj.foo++;
+
+        // watch 监听
+        const data = { foo: 1, bar: 2 };
+        const obj = buildResponsiveProxy(data);
+        watch(obj, (newVal,oldVal) => {
+            console.log('变化了',newVal.foo ,oldVal)
+        },{
+            // 回调函数会在watch 创建时立即执行一次
+            // flush: 'post', // 还可以指定为 'post' | 'sync'
+            immediate: true
+        });
        
     </script>
 </body>

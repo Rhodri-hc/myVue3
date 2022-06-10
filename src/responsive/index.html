@@ -12,6 +12,7 @@
     <script src="./proxy.js"></script>
     <script src="./computed.js"></script>
     <script src="./watch.js"></script>
+    <script src="./reactive.js"></script>
     <script>
         // const response = {
         //     foo: 1
@@ -51,16 +52,31 @@
         // obj.foo++;
 
         // watch 监听
+        // const data = { foo: 1, bar: 2 };
+        // const obj = buildResponsiveProxy(data);
+        // watch(obj, (newVal,oldVal) => {
+        //     console.log('变化了',newVal.foo ,oldVal)
+        // },{
+        //     // 回调函数会在watch 创建时立即执行一次
+        //     // flush: 'post', // 还可以指定为 'post' | 'sync'
+        //     immediate: true
+        // });
+
+
+        // 引用对象的响应式原理
+        // 使用in 操作符检查对象上是否具有给定的key 也属于“读取”操作
         const data = { foo: 1, bar: 2 };
-        const obj = buildResponsiveProxy(data);
-        watch(obj, (newVal,oldVal) => {
-            console.log('变化了',newVal.foo ,oldVal)
-        },{
-            // 回调函数会在watch 创建时立即执行一次
-            // flush: 'post', // 还可以指定为 'post' | 'sync'
-            immediate: true
-        });
-       
+        const obj = reactive(data);
+        effect(()=>{
+            // 'foo' in obj // 将会建议依赖关系
+            // for...in 循环
+            for (const key in obj) {
+                console.log(key);
+            }
+        })    
+        
+        // obj.bar = 3;
+        delete obj.bar;
     </script>
 </body>
 </html>

@@ -1,0 +1,108 @@
+/** 引用对象代理
+ * 
+ * 这一章节一上来就介绍了常规对象与异质对象的不同，以及如何区分
+ * 1.对于表列出的11个内部方法，必须使用ECMA规范10.1.x 节给出的定义实现；
+ * 2.对于内部方法[[ Call ]]，必须使用ECMA 规范10.2.1 节给出的定义实现；
+ * 3.对于内部方法[[ Construct ]]，必须使用ECMA 规范10.2.2 节给出的定义实现；
+ * 满足以上三点为常规对象，否则为异质对象
+ * 
+ * 接着介绍proxy为异质对象，如果在创建代理对象时没有指定对应的拦截函数，
+ * 例如没有指定get() 拦截函数, 那么但我们通过代理对象访问属性值时，代理对象的内部方法
+ * [[ Get ]] 会调用原始对象的内部方法[[ Get ]]来获取属性值，这其实就是代理透明性质。
+ * 
+ * Proxy 对象部署的所有内部方法
+ * ------------------------------------------------------
+ * 内部方法               处理器函数
+ * [[GetPrototypeOf]]    getPrototypeOf
+ * [[SetPrototypeOf]]    setPrototypeOf
+ * [[IsExtensible]]      isExtensible
+ * [[PreventExtensions]] preventExtensions
+ * [[GetOwnProperty]]    getOwnPropertyDescriptor
+ * [[DefineOwnProperty]] defineProperty
+ * [[HasProperty]]       has
+ * [[Get]]               get
+ * [[Set]]               set
+ * [[Delete]]            deleteProperty
+ * [[OwnPropertyKeys]]   ownKeys
+ * [[Call]]              apply
+ * [[Construct]]         construct
+ * --------------------------------------------------------
+ * 其中[[Call]]和[[Construct]]这两个内部方法只有当被代理的对象是函数和构造函数时才会部署。
+ */
+
+// ITERATE_KEY 用来追踪 for...in 依赖收集与响应
+var ITERATE_KEY = Symbol()
+// 操作类型枚举
+var TriggerType = {
+    SET: "SET",
+    ADD: "ADD",
+    DELETE: "DELETE"
+}
+
+
+/**
+* @desc 引用对象的响应式代理
+* @author 张和潮
+* @date 2022年06月10日 11:34:14
+*/
+function reactive(obj) {
+    return new Proxy(obj, {
+        // 读取属性，依赖收集
+        get(target, key, receiver){
+            // 建立联系
+            track(target, key);
+            // 返回属性值
+            return Reflect.get(target, key, receiver)
+        },
+
+        // has 拦截函数实现对in 操作符的代理
+        has(target,key){
+            // 依赖收集
+            track(target, key);
+            // 返回是否具有给定的key
+            return Reflect.has(target, key);
+        },
+
+        // ownKeys拦截函数实现对 for...in代理
+        ownKeys(target){
+            // 依赖收集
+            track(target, ITERATE_KEY);
+            
+            return Reflect.ownKeys(target)
+        },
+
+        // deleteProperty 拦截对delete的代理
+        deleteProperty(target, key){
+            // 检查被操作的属性是否是对象自己的属性
+            const hasKey = Object.prototype.hasOwnProperty.call(target, key)
+
+            // 使用Reflect.deleteProperty 完成属性的删除
+            const res = Reflect.deleteProperty(target, key);
+
+            if (res && hasKey) {
+                // 只要当被删除的属性时对象自己的属性并且成功删除时，才触发更新
+                trigger(target, key, TriggerType.DELETE)
+            }
+
+            return res;
+        },
+
+        // 拦截设置操作
+        set(target, key, newVal, receiver){
+            // 如果属性不存在，这说明是在添加新属性，否则是设置已有属性
+            const type = Object.prototype.hasOwnProperty.call(target, key) 
+                            ? TriggerType.SET 
+                            : TriggerType.ADD;
+
+            // 设置属性值
+            const res = Reflect.set(target, key, newVal, receiver);
+
+            // 把副作用函数从桶里拿出来执行
+            // type 用来管理触发的时候是否触发for...in 对应的依赖
+            trigger(target, key, type);
+            
+            return res;
+        }
+    })
+    
+}

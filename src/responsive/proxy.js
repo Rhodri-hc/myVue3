@@ -154,10 +154,11 @@ function track(target, key){
 
 /**
 * @desc 触发副作用函数重新执行，在 set拦截函数内调用trigger 函数触发变化
+* @params {String} type 触发类型
 * @author 张和潮
 * @date 2022年06月07日 09:27:57
 */
-function trigger(target,key){
+function trigger(target, key, type){
        // 获取桶里 target 对应的对象
        const bucketObjMap = objWeakMap.get(target)
 
@@ -170,11 +171,24 @@ function trigger(target,key){
        // 构造另一 Set集合遍历他，避免无限执行
        const effectsToRun = new Set()
        effects && effects.forEach(effectFn => {
-           // 如果trigger 触发执行的副作用函数与当前只在执行的 副作用函数相同，则不粗发执行
+           // 如果trigger 触发执行的副作用函数与当前只在执行的 副作用函数相同，则不触发执行
            if(effectFn !== activeEffect){
                effectsToRun.add(effectFn)
            }
        })
+
+       // 只有当操作类型为 ADD 或 DELETE 时，才触发与ITERATE_KEY相关联的副作用函数重新执行
+       if (type === TriggerType.ADD || type === TriggerType.DELETE) {
+           // 取得与ITERATE_KEY 相关联的副作用函数
+           const iterateEffects = bucketObjMap.get(ITERATE_KEY)
+           // 将与 ITERATE_KEY 相关联的副作用函数也添加到effectsToRun
+           iterateEffects && iterateEffects.forEach(effectFn => {
+                if(effectFn !== activeEffect){
+                    effectsToRun.add(effectFn)
+                }
+           })   
+       }
+
        // 执行key值中对应的 依赖函数
        effectsToRun && effectsToRun.forEach(fn => {
            // 如果副作用函数存在调度器，则调用该调度器，并将副作用函数函数作为参数传递

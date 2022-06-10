@@ -40,17 +40,25 @@ var TriggerType = {
 }
 
 /**
-* @desc 封装 createReactive 函数，接收一个参数 isShallow, 代表为浅响应，默认为false，即非浅响应
+* @desc 封装 createReactive 函数
+* @param { Boolean } isShallow 接收一个参数 isShallow, 代表为浅响应，默认为false，即非浅响应
+* @param { Boolean } isReadonly 接收一个参数 isReadonly, 代表为浅只读，默认为false，即只读
 * @author 张和潮
 * @date 2022年06月10日 11:34:14
 */
-function createReactive(obj, isShallow = false) {
+function createReactive(obj, isShallow = false, isReadonly = false) {
     return new Proxy(obj, {
         // 读取属性，依赖收集
         get(target, key, receiver){
             // 代理对象可以通过 raw 属性访问原始数据
             if (key === 'raw') {
                 return target;
+            }
+
+            // 非只读的时候才需要建立响应联系
+            if (!isReadonly) {
+                // 建立联系
+                track(target, key);
             }
 
             // 得到原始值结果
@@ -61,12 +69,11 @@ function createReactive(obj, isShallow = false) {
                 return res;
             }
 
-            // 建立联系
-            track(target, key);
-           
+
             if (typeof res === 'object' && res !== null) {
                 // 调用reactive 将结果包装成响应式数据并返回
-                return reactive(res)
+                // 如果数据为只读，则调用readonly 对值进行包装
+                return isReadonly ? readonly(res) : reactive(res)
             }
 
             // 返回res
@@ -91,6 +98,12 @@ function createReactive(obj, isShallow = false) {
 
         // deleteProperty 拦截对delete的代理
         deleteProperty(target, key){
+             // 只读属性的话，打印错误信息并返回
+             if (isReadonly) {
+                console.warn(`属性${key} 为只读属性`);
+                return;
+            }
+
             // 检查被操作的属性是否是对象自己的属性
             const hasKey = Object.prototype.hasOwnProperty.call(target, key)
 
@@ -109,6 +122,12 @@ function createReactive(obj, isShallow = false) {
         // target 是原始对象 obj
         // receiver 是代理对象 child
         set(target, key, newVal, receiver){
+            // 只读属性的话，打印错误信息并返回
+            if (isReadonly) {
+                console.warn(`属性${key} 为只读属性`);
+                return;
+            }
+
             // 获取旧值
             const oldVal = target[key]
 
@@ -153,4 +172,22 @@ function reactive(obj){
 */
 function shallowReactive(obj){
     return createReactive(obj, true)
+}
+
+/**
+* @desc 浅只读
+* @author 张和潮
+* @date 2022年06月10日 17:22:23
+*/
+function shallowReadonly(obj) {
+    return createReactive(obj, true, true)
+}
+
+/**
+* @desc 只读
+* @author 张和潮
+* @date 2022年06月10日 17:37:09
+*/
+function readonly(obj) {
+    return createReactive(obj, false, true)
 }

@@ -96,14 +96,18 @@
         // // 修改 child.bar 的值
         // child.bar = 2
 
-        // 浅响应与深响应
-        const obj = shallowReactive({ foo: { bar: 1 }})
+        // // 浅响应与深响应
+        // const obj = shallowReactive({ foo: { bar: 1 }})
 
-        effect(() => {
-            console.log(obj.foo.bar);
-        })
+        // effect(() => {
+        //     console.log(obj.foo.bar);
+        // })
 
-        obj.foo.bar = 2
+        // obj.foo.bar = 2
+
+        // 只读和浅只读
+        const obj = shallowReadonly({ foo: { bar: 1 }, zoo: 2 })
+        obj.zoo = 4
     </script>
 </body>
 </html>

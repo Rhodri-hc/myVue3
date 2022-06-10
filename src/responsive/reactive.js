@@ -49,6 +49,11 @@ function reactive(obj) {
     return new Proxy(obj, {
         // 读取属性，依赖收集
         get(target, key, receiver){
+            // 代理对象可以通过 raw 属性访问原始数据
+            if (key === 'raw') {
+                return target;
+            }
+
             // 建立联系
             track(target, key);
             // 返回属性值
@@ -88,7 +93,12 @@ function reactive(obj) {
         },
 
         // 拦截设置操作
+        // target 是原始对象 obj
+        // receiver 是代理对象 child
         set(target, key, newVal, receiver){
+            // 获取旧值
+            const oldVal = target[key]
+
             // 如果属性不存在，这说明是在添加新属性，否则是设置已有属性
             const type = Object.prototype.hasOwnProperty.call(target, key) 
                             ? TriggerType.SET 
@@ -96,10 +106,16 @@ function reactive(obj) {
 
             // 设置属性值
             const res = Reflect.set(target, key, newVal, receiver);
-
-            // 把副作用函数从桶里拿出来执行
-            // type 用来管理触发的时候是否触发for...in 对应的依赖
-            trigger(target, key, type);
+            
+            // target === receiver.raw 说明 receiver 就是 target 的代理对象
+            if (target === receiver.raw) {
+                // 比较新值与旧值，只有当他们不全等，并且都不是NaN 的时候才触发响应
+                if (oldVal !== newVal && (oldVal === oldVal || newVal === newVal)) {
+                    // 把副作用函数从桶里拿出来执行
+                    // type 用来管理触发的时候是否触发for...in 对应的依赖
+                    trigger(target, key, type);
+                }
+            }
             
             return res;
         }

@@ -65,18 +65,36 @@
 
         // 引用对象的响应式原理
         // 使用in 操作符检查对象上是否具有给定的key 也属于“读取”操作
-        const data = { foo: 1, bar: 2 };
-        const obj = reactive(data);
-        effect(()=>{
-            // 'foo' in obj // 将会建议依赖关系
-            // for...in 循环
-            for (const key in obj) {
-                console.log(key);
-            }
-        })    
+        // const data = { foo: 1, bar: 2 };
+        // const obj = reactive(data);
+        // effect(()=>{
+        //     // 'foo' in obj // 将会建议依赖关系
+        //     // for...in 循环
+        //     // for (const key in obj) {
+        //     //     console.log(key);
+        //     // }
+        //     console.log(obj.foo);
+        // })    
         
-        // obj.bar = 3;
-        delete obj.bar;
+        // // obj.bar = 3;
+        // // delete obj.bar;
+        // obj.foo = 1
+
+
+        // 合理触发响应式
+        const obj = {};
+        const proto = { bar: 1 }; 
+        const child = reactive( obj );
+        const parent = reactive( proto );
+        
+        // 使用 parent 作为 child 的原型
+        Object.setPrototypeOf(child, parent);
+        effect(() => {
+            console.log(child.bar)
+        })
+
+        // 修改 child.bar 的值
+        child.bar = 2
     </script>
 </body>
 </html>

@@ -39,13 +39,12 @@ var TriggerType = {
     DELETE: "DELETE"
 }
 
-
 /**
-* @desc 引用对象的响应式代理
+* @desc 封装 createReactive 函数，接收一个参数 isShallow, 代表为浅响应，默认为false，即非浅响应
 * @author 张和潮
 * @date 2022年06月10日 11:34:14
 */
-function reactive(obj) {
+function createReactive(obj, isShallow = false) {
     return new Proxy(obj, {
         // 读取属性，依赖收集
         get(target, key, receiver){
@@ -54,10 +53,24 @@ function reactive(obj) {
                 return target;
             }
 
+            // 得到原始值结果
+            const res =  Reflect.get(target, key, receiver)
+
+            // 如果是浅响应，直接返回原始值
+            if (isShallow) {
+                return res;
+            }
+
             // 建立联系
             track(target, key);
-            // 返回属性值
-            return Reflect.get(target, key, receiver)
+           
+            if (typeof res === 'object' && res !== null) {
+                // 调用reactive 将结果包装成响应式数据并返回
+                return reactive(res)
+            }
+
+            // 返回res
+            return res;
         },
 
         // has 拦截函数实现对in 操作符的代理
@@ -121,4 +134,23 @@ function reactive(obj) {
         }
     })
     
+}
+
+
+/**
+* @desc 引用对象的深响应
+* @author 张和潮
+* @date 2022年06月10日 16:50:45
+*/
+function reactive(obj){
+    return createReactive(obj)
+}
+
+/**
+* @desc 引用对象的浅响应
+* @author 张和潮
+* @date 2022年06月10日 16:50:45
+*/
+function shallowReactive(obj){
+    return createReactive(obj, true)
 }

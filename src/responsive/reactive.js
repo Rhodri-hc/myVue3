@@ -132,9 +132,13 @@ function createReactive(obj, isShallow = false, isReadonly = false) {
             const oldVal = target[key]
 
             // 如果属性不存在，这说明是在添加新属性，否则是设置已有属性
-            const type = Object.prototype.hasOwnProperty.call(target, key) 
-                            ? TriggerType.SET 
-                            : TriggerType.ADD;
+            const type = Array.isArray(target)
+                         // 如果代理是数组，则检测被设置的索引值是否小于数组长度
+                         // 如果是，则视作 SET 操作，否则是 ADD 操作
+                           ? Number(key) < target.length ? TriggerType.SET : TriggerType.ADD
+                           : Object.prototype.hasOwnProperty.call(target, key) 
+                                ? TriggerType.SET 
+                                : TriggerType.ADD;
 
             // 设置属性值
             const res = Reflect.set(target, key, newVal, receiver);
@@ -145,7 +149,8 @@ function createReactive(obj, isShallow = false, isReadonly = false) {
                 if (oldVal !== newVal && (oldVal === oldVal || newVal === newVal)) {
                     // 把副作用函数从桶里拿出来执行
                     // type 用来管理触发的时候是否触发for...in 对应的依赖
-                    trigger(target, key, type);
+                    // 数组: 增加第四个参数，即触发响应的新值
+                    trigger(target, key, type, newVal);
                 }
             }
             

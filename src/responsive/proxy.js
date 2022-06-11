@@ -155,10 +155,11 @@ function track(target, key){
 /**
 * @desc 触发副作用函数重新执行，在 set拦截函数内调用trigger 函数触发变化
 * @params {String} type 触发类型
+* @params {Any} newVal  数组: 增加第四个参数，即触发响应的新值
 * @author 张和潮
 * @date 2022年06月07日 09:27:57
 */
-function trigger(target, key, type){
+function trigger(target, key, type, newVal){
        // 获取桶里 target 对应的对象
        const bucketObjMap = objWeakMap.get(target)
 
@@ -188,6 +189,34 @@ function trigger(target, key, type){
                 }
            })   
        }
+
+       // 当操作类型为 ADD 并且目标对象是数组时，应该去除并执行那些与length属性相关联的副作用函数
+       if (type === TriggerType.ADD && Array.isArray(target)) {
+           // 取出与length 相关联的副作用函数
+           const lengthEffects = bucketObjMap.get('length')
+           // 将这些副作用函数添加到 effectsToRun 中待执行
+           lengthEffects && lengthEffects.forEach(effectFn => {
+                if(effectFn !== activeEffect){
+                    effectsToRun.add(effectFn)
+                }
+           })
+       }
+
+       // 如果操作目标是数组，并且修改了数组的length属性
+       if (Array.isArray(target) && key === 'length') {
+           // 对于索引大于或等于新的length值的元素，
+           // 需要把相关联的副作用函数去除并添加到effectToRun中待执行
+           bucketObjMap.forEach((effects, key) => {
+                if(key >= newVal){
+                    effects.forEach(effectFn => {
+                        if(effectFn !== activeEffect){
+                            effectsToRun.add(effectFn)
+                        }
+                    })
+                }
+           })
+       }
+
 
        // 执行key值中对应的 依赖函数
        effectsToRun && effectsToRun.forEach(fn => {

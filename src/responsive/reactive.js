@@ -62,6 +62,24 @@ const arrInstrumentations = {};
         return res;
     }
 })
+// 一个标记变量, 代表是都进行跟踪，默认值为 true，即允许追踪
+var shouldTrack = true;
+// 重写数组的 push、pop、shift、unshift以及splice 方法
+['push', 'pop', 'shift', 'unshift', 'splice'].forEach(method => {
+    // 取得原始方法
+    const originMethod = Array.prototype[method];
+    // 重写
+    arrInstrumentations[method] = function(...args){
+        // 在调用原始方法时，禁止追踪
+        shouldTrack = false;
+        // 默认行为
+        let res = originMethod.apply(this, args);
+        // 在调用原始方法之后， 恢复原来的行为，即允许追踪
+        shouldTrack = true;
+
+        return res;
+    }
+});
 
 /**
 * @desc 封装 createReactive 函数

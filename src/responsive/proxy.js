@@ -126,7 +126,8 @@ function buildResponsiveProxy(data){
 */
 function track(target, key){
     // 不存在当前响应的依赖函数则返回
-    if (!activeEffect) {
+    // 当禁止追踪时，直接返回
+    if (!activeEffect || !shouldTrack) {
         return;
     }
     

@@ -142,17 +142,31 @@
         // arr[1] = 'bar'
         // // arr.length = 0  
 
-        // 数组的查找方法
-        const obj = {}
-        const arr = reactive([obj])
+        // // 数组的查找方法
+        // const obj = {}
+        // const arr = reactive([obj])
 
-        // effect(() => {
-        //     console.log(arr.includes(1));
-        // })
+        // // effect(() => {
+        // //     console.log(arr.includes(1));
+        // // })
 
-        // arr[0] = 3
-        console.log(arr.includes(obj));
+        // // arr[0] = 3
+        // console.log(arr.includes(obj));
 
+        // 隐式修改数组长度的原型方法
+        const arr = reactive([])
+        // 第一个副作用函数
+        effect(() => {
+            arr.push(1)
+        })
+
+        // 第二个副作用函数
+        effect(() => {
+            arr.push(1)
+        })
+
+        console.log(arr);
+        
     </script>
 </body>
 </html>

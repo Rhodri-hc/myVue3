@@ -55,8 +55,9 @@ function createReactive(obj, isShallow = false, isReadonly = false) {
                 return target;
             }
 
+            // 添加判断，如果 key 的类型是 symbol ，则不进行追踪
             // 非只读的时候才需要建立响应联系
-            if (!isReadonly) {
+            if (!isReadonly && typeof key !== 'symbol') {
                 // 建立联系
                 track(target, key);
             }
@@ -91,7 +92,8 @@ function createReactive(obj, isShallow = false, isReadonly = false) {
         // ownKeys拦截函数实现对 for...in代理
         ownKeys(target){
             // 依赖收集
-            track(target, ITERATE_KEY);
+            // 如果操作目标 target 是数组，则使用 length 属性作为 key 并建立响应联系
+            track(target, Array.isArray(target) ? 'length' : ITERATE_KEY);
             
             return Reflect.ownKeys(target)
         },

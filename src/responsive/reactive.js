@@ -40,6 +40,30 @@ var TriggerType = {
 }
 
 /**
+* @desc 重写数组方法
+* @desc 这是因为有些时候需要在代理对象和原始对象中操作数组
+* @author 张和潮
+* @date 2022年06月12日 18:46
+*/
+const arrInstrumentations = {};
+// 重定义查询方法
+['includes', 'indexOf', 'lastIndexOf'].forEach(method => {
+    const originMethod = Array.prototype[method];
+    arrInstrumentations[method] = function(...args){
+        // this是代理对象，先在代理对象中查找，将结果存储到res中
+        let res = originMethod.apply(this, args);
+
+        if (res === false) {
+            // res为false 说明在代理对象中没有找到，
+            // 通过 this.raw 拿到原始数组，再去其中寻找，并更新res 值
+            res = originMethod.apply(this.raw, args);
+        }
+
+        return res;
+    }
+})
+
+/**
 * @desc 封装 createReactive 函数
 * @param { Boolean } isShallow 接收一个参数 isShallow, 代表为浅响应，默认为false，即非浅响应
 * @param { Boolean } isReadonly 接收一个参数 isReadonly, 代表为浅只读，默认为false，即只读
@@ -53,6 +77,12 @@ function createReactive(obj, isShallow = false, isReadonly = false) {
             // 代理对象可以通过 raw 属性访问原始数据
             if (key === 'raw') {
                 return target;
+            }
+         
+            // 如果操作目标是数组，并且 key 存在于arrInstrumentations 上，
+            // 那么返回定义在arrInstrumentations 上的值
+            if (Array.isArray(target) && arrInstrumentations.hasOwnProperty(key)) {
+                return Reflect.get(arrInstrumentations, key, receiver)
             }
 
             // 添加判断，如果 key 的类型是 symbol ，则不进行追踪
@@ -168,8 +198,22 @@ function createReactive(obj, isShallow = false, isReadonly = false) {
 * @author 张和潮
 * @date 2022年06月10日 16:50:45
 */
+// 定义一个 Map 实例，存储原始对象到代理对象的映射
+const reactiveMap = new Map()
+
 function reactive(obj){
-    return createReactive(obj)
+    // 优先通过原始对象obj 寻找之前创建的代理对象，如果找到了，直接返回已有的代理对象
+    const existionProxy = reactiveMap.get(obj)
+    if (existionProxy) {
+        return existionProxy;
+    }
+
+    // 否则，创建新的代理对象
+    const proxy = createReactive(obj);
+    // 存储到 Map 中，从而帮助重复创建
+    reactiveMap.set(obj, proxy)
+
+    return proxy
 }
 
 /**

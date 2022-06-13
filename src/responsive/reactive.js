@@ -30,6 +30,25 @@
  * 其中[[Call]]和[[Construct]]这两个内部方法只有当被代理的对象是函数和构造函数时才会部署。
  */
 
+/**
+* @desc 判断对象是否为Set类型  
+* @author 张和潮
+* @date 2022年06月13日 16:01
+*/
+function isSetObj(obj){
+    return Object.prototype.toString.apply(obj) === '[object Set]'
+}
+
+/*
+* @desc 判断对象是否为Map类型  
+* @author 张和潮
+* @date 2022年06月13日 16:01
+*/
+function isMapObj(obj){
+    return Object.prototype.toString.apply(obj) === '[object Map]'
+}
+
+
 // ITERATE_KEY 用来追踪 for...in 依赖收集与响应
 var ITERATE_KEY = Symbol()
 // 操作类型枚举
@@ -82,6 +101,53 @@ var shouldTrack = true;
 });
 
 /**
+* @desc set & map 的自定义的方法
+* @author 张和潮
+* @date 2022年06月13日 16:17
+*/
+// 定义一个对象，将自定义的 add 方法定义到该对象下
+const mutableInstrumentations = {
+    // add (Set)
+    add(key){
+        // this 仍然指向的是代理对象，通过 raw 属性获取原始数据对象
+        const target = this.raw;
+
+        // 先判断值是否已经存在
+        const hadKey = target.has(key);
+        // 通过原始数据对象执行 add 方法删除具体的值，
+        // 注意，这里不再需要 .bind 了，因为是直接通过 target 调用并执行的
+        const res = target.add(key);
+        // 只有在值不存在的情况下，才需要触发响应
+        if (!hadKey) {
+            // 调用 trigger 函数触发响应，并指定操作类型为 ADD
+            trigger(target, key, TriggerType.ADD);
+        }
+        // 返回操作结果
+        return res;
+    },
+    // delete
+    delete(key){
+        // this 仍然指向的是代理对象，通过 raw 属性获取原始数据对象
+        const target = this.raw;
+
+        // 先判断值是否已经存在
+        const hadKey = target.has(key);
+        // 通过原始数据对象执行 DELETE 方法删除具体的值，
+        // 注意，这里不再需要 .bind 了，因为是直接通过 target 调用并执行的
+        const res = target.add(key);
+        // 当要删除的值存在的情况下，才需要触发响应
+        if (hadKey) {
+            // 调用 trigger 函数触发响应，并指定操作类型为 ADD
+            trigger(target, key, TriggerType.DELETE);
+        }
+        // 返回操作结果
+        return res;
+    }
+    
+}
+
+
+/**
 * @desc 封装 createReactive 函数
 * @param { Boolean } isShallow 接收一个参数 isShallow, 代表为浅响应，默认为false，即非浅响应
 * @param { Boolean } isReadonly 接收一个参数 isReadonly, 代表为浅只读，默认为false，即只读
@@ -95,6 +161,19 @@ function createReactive(obj, isShallow = false, isReadonly = false) {
             // 代理对象可以通过 raw 属性访问原始数据
             if (key === 'raw') {
                 return target;
+            }
+
+            // Set & Map
+            if(isSetObj(target) || isMapObj(target)){
+                if (key === 'size') {
+                    // 调用 track 函数建立响应联系
+                    track(target, ITERATE_KEY);
+
+                    return Reflect.get(target, key, target)
+                }
+
+                // 返回定义在 mutableInstrumentations 对象上的方法
+                return mutableInstrumentations[key];
             }
          
             // 如果操作目标是数组，并且 key 存在于arrInstrumentations 上，

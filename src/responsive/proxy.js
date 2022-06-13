@@ -180,7 +180,11 @@ function trigger(target, key, type, newVal){
        })
 
        // 只有当操作类型为 ADD 或 DELETE 时，才触发与ITERATE_KEY相关联的副作用函数重新执行
-       if (type === TriggerType.ADD || type === TriggerType.DELETE) {
+       if (type === TriggerType.ADD ||
+           type === TriggerType.DELETE || 
+           // Map 与 Set 对象在进行forEach 遍历时，会涉及到每一项value
+           (type === TriggerType.SET && isMapObj(target))
+           ) {
            // 取得与ITERATE_KEY 相关联的副作用函数
            const iterateEffects = bucketObjMap.get(ITERATE_KEY)
            // 将与 ITERATE_KEY 相关联的副作用函数也添加到effectsToRun

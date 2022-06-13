@@ -176,8 +176,87 @@ const mutableInstrumentations = {
             // 如果存在，并且值变了，则是 SET 类型的操作，意味着修改
             trigger(target, key, TriggerType.SET);
         }
-    }
+    },
+    // forEach
+    forEach(callBack, thisVal){
+        // 定义 wrap 函数将可代理对象转换为可响应式数据
+        const wrap = (val) => typeof val === 'object' ? reactive(val) : val;
+
+        // 获取原始对象
+        const target = this.raw;
+        // 追踪依赖, ITERATE_KEY 用于影响 Set 与 Map 的size 追踪
+        track(target, ITERATE_KEY);
+        // 原始对象遍历
+        target.forEach((v, k)=> {
+            callBack.call(thisVal, wrap(v), wrap(k), this);
+        })
+    },
+    // 迭代器协议，可迭代协议
+    [Symbol.iterator]: iterationMethod,
+    entries: iterationMethod,
+    values: valuesIterationsMethod
+}
+/**
+* @desc 迭代共用方法(value, key)
+* @author 张和潮
+* @date 2022年06月13日 22:23
+*/
+function iterationMethod(){
+    // 获取原始对象
+    const target = this.raw;
+    // 调用原始对象的迭代方法
+    const itr = target[Symbol.iterator]();
     
+    const wrap = (val) => typeof val === 'object' ? reactive(val) : val;
+
+    // 依赖追踪
+    track(target, ITERATE_KEY);
+
+    return {
+        // 迭代器协议
+        next(){
+            const {value, done} = itr.next()
+            return {
+                value: value ? [wrap(value[0]), wrap(value[1])] : value,
+                done
+            }
+        },
+        // 可迭代协议
+        [Symbol.iterator](){
+            return this;
+        }
+    }
+},
+/**
+* @desc 迭代方法(values)
+* @author 张和潮
+* @date 2022年06月13日 22:48
+*/
+function valuesIterationsMethod() {
+    // 获取原始对象
+    const target = this.raw;
+    // 调用原始对象的迭代方法
+    const itr = target[Symbol.iterator]();
+    
+    const wrap = (val) => typeof val === 'object' ? reactive(val) : val;
+
+    // 依赖追踪
+    track(target, ITERATE_KEY);
+
+    return {
+        // 迭代器协议
+        next(){
+            const {value, done} = itr.next()
+            return {
+                value: value ? wrap(value) : value,
+                done
+            }
+        },
+        // 可迭代协议
+        [Symbol.iterator](){
+            return this;
+        }
+    }
 }
 
 

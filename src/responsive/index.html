@@ -169,13 +169,36 @@
         
 
         // Set 与 Map 的代理
-        const pMap = reactive(new Map([['key', 1]]));
+        // const pMap = reactive(new Map([['key', 1]]));
 
-        effect(() => {
-            console.log(pMap.get('key'));
+        // effect(() => {
+        //     console.log(pMap.get('key'));
+        // })
+
+        // pMap.set('key', 2)
+
+        // // Set 与 Map 的forEach 遍历
+        // const pMap = reactive(new Map([['key1', 1], ['key2', 2]]));
+
+        // effect(() =>{
+        //     pMap.forEach((value, key) => {
+        //         console.log(value, key);
+        //     });
+        // })
+
+        // pMap.set("key1", 3)
+
+        // Set 与 Map 的 迭代器方法
+        // for...of、entries、values、keys 
+        const pMap = reactive(new Map([['key1', 1], ['key2', 2]]));
+
+        effect(() =>{
+            for (const [value, key] of pMap) {
+                console.log(value, key);
+            }
         })
 
-        pMap.set('key', 2)
+        pMap.set('key1', 3)
     </script>
 </body>
 </html>

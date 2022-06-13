@@ -142,6 +142,40 @@ const mutableInstrumentations = {
         }
         // 返回操作结果
         return res;
+    },
+    // get
+    get(key){
+        // 获取原始对象
+        const target = this.raw;
+        // 判断读取的key 是否存在
+        const had = target.has(key);
+        // 追踪依赖，建立响应联系
+        track(target, key);
+        // 如果存在，则返回结果，这里要注意的是，如果得到的结果 res 仍然是可代理数据，
+        // 则要返回使用 reactive 包装后的响应式数据
+        if (had) {
+            const res = target.get(key);
+            return typeof res === 'object' ? reactive(res) : res;
+        }
+    },
+    // set 
+    set(key, value){
+        const target = this.raw;
+        const had = target.has(key);
+        // 获取旧值
+        const oldValue = target.get(key);
+
+        // 获取原始数据，由于value 本身可能已经是原始数据，所以此时value.raw 不存在，则直接使用value
+        const rawValue = value.raw || value;
+        // 设置新值
+        target.set(key, rawValue);
+        // 如果不存在，则说明是ADD类型的操作，意味着新增
+        if (!had) {
+            trigger(target, key, TriggerType.ADD);
+        } else if(oldValue !== value || (oldValue === oldValue && value === value)){
+            // 如果存在，并且值变了，则是 SET 类型的操作，意味着修改
+            trigger(target, key, TriggerType.SET);
+        }
     }
     
 }

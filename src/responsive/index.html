@@ -193,12 +193,10 @@
         const pMap = reactive(new Map([['key1', 1], ['key2', 2]]));
 
         effect(() =>{
-            for (const [value, key] of pMap) {
-                console.log(value, key);
-            }
+            console.log(pMap.keys());
         })
 
-        pMap.set('key1', 3)
+        pMap.set('key3', 3)
     </script>
 </body>
 </html>

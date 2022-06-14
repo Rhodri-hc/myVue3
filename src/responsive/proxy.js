@@ -194,6 +194,21 @@ function trigger(target, key, type, newVal){
                 }
            })   
        }
+      
+       // 只有当操作类型为 ADD 或 DELETE 时，才触发与 MAP_ITERATE_KEY 相关联的副作用函数重新执行(Map keys)
+       if ((type === TriggerType.ADD ||
+           type === TriggerType.DELETE) && 
+           isMapObj(target)
+           ) {
+           // 取得与MAP_ITERATE_KEY 相关联的副作用函数
+           const mapIterateEffects = bucketObjMap.get(MAP_ITERATE_KEY)
+           // 将与 MAP_ITERATE_KEY 相关联的副作用函数也添加到effectsToRun
+           mapIterateEffects && mapIterateEffects.forEach(effectFn => {
+                if(effectFn !== activeEffect){
+                    effectsToRun.add(effectFn)
+                }
+           })   
+       }
 
        // 当操作类型为 ADD 并且目标对象是数组时，应该去除并执行那些与length属性相关联的副作用函数
        if (type === TriggerType.ADD && Array.isArray(target)) {

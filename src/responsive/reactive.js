@@ -50,7 +50,10 @@ function isMapObj(obj){
 
 
 // ITERATE_KEY 用来追踪 for...in 依赖收集与响应
-var ITERATE_KEY = Symbol()
+var ITERATE_KEY = Symbol();
+// MAP_ITERATE_KEY 用来追踪 Map 对象的keys 响应更新
+var MAP_ITERATE_KEY = Symbol(); 
+
 // 操作类型枚举
 var TriggerType = {
     SET: "SET",
@@ -194,7 +197,8 @@ const mutableInstrumentations = {
     // 迭代器协议，可迭代协议
     [Symbol.iterator]: iterationMethod,
     entries: iterationMethod,
-    values: valuesIterationsMethod
+    values: valuesIterationsMethod,
+    keys: keysIterationsMethod
 }
 /**
 * @desc 迭代共用方法(value, key)
@@ -226,7 +230,8 @@ function iterationMethod(){
             return this;
         }
     }
-},
+}
+
 /**
 * @desc 迭代方法(values)
 * @author 张和潮
@@ -236,12 +241,44 @@ function valuesIterationsMethod() {
     // 获取原始对象
     const target = this.raw;
     // 调用原始对象的迭代方法
-    const itr = target[Symbol.iterator]();
+    const itr = target.values();
     
     const wrap = (val) => typeof val === 'object' ? reactive(val) : val;
 
     // 依赖追踪
     track(target, ITERATE_KEY);
+
+    return {
+        // 迭代器协议
+        next(){
+            const {value, done} = itr.next()
+            return {
+                value: value ? wrap(value) : value,
+                done
+            }
+        },
+        // 可迭代协议
+        [Symbol.iterator](){
+            return this;
+        }
+    }
+}
+
+/**
+* @desc 迭代方法(keys)
+* @author 张和潮
+* @date 2022年06月13日 22:48
+*/
+function keysIterationsMethod() {
+    // 获取原始对象
+    const target = this.raw;
+    // 调用原始对象的迭代方法
+    const itr = target.keys();
+    
+    const wrap = (val) => typeof val === 'object' ? reactive(val) : val;
+
+    // 依赖追踪, 使用新的 Symbol key值更新
+    track(target, MAP_ITERATE_KEY);
 
     return {
         // 迭代器协议

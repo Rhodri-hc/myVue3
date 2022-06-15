@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>渲染器</title>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script src="../responsive/proxy.js"></script>
+    <script src="../responsive/reactive.js"></script>
+    <script src="../responsive/ref.js"></script>
+    <script src="createRenderer.js"></script>
+
+    <script>
+        const count = ref(1);
+
+        effect(() => {
+            renderer(`<h1>${count.value}</h1>`, document.getElementById('app'));
+        })
+
+        count.value++;
+    </script>
+</body>
+</html>

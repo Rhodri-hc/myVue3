@@ -13,6 +13,7 @@
     <script src="./computed.js"></script>
     <script src="./watch.js"></script>
     <script src="./reactive.js"></script>
+    <script src="./ref.js"></script>
     <script>
         // const response = {
         //     foo: 1
@@ -188,15 +189,24 @@
 
         // pMap.set("key1", 3)
 
-        // Set 与 Map 的 迭代器方法
-        // for...of、entries、values、keys 
-        const pMap = reactive(new Map([['key1', 1], ['key2', 2]]));
+        // // Set 与 Map 的 迭代器方法
+        // // for...of、entries、values、keys 
+        // const pMap = reactive(new Map([['key1', 1], ['key2', 2]]));
 
-        effect(() =>{
-            console.log(pMap.keys());
+        // effect(() =>{
+        //     console.log(pMap.keys());
+        // })
+
+        // pMap.set('key3', 3)
+
+
+        // 原始值的响应方案 ref
+        const refVal = ref(1);
+        effect(() => {
+            console.log(refVal.value);
         })
 
-        pMap.set('key3', 3)
+        refVal.value = 2
     </script>
 </body>
 </html>

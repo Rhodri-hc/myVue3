@@ -5,10 +5,22 @@
  * 
  */
 /**
-* @desc 渲染器
+* @desc 创建渲染器
 * @author 张和潮
 * @date 2022年06月15日 22:03
 */
-function renderer(domString, container) {
-    container.innerHTML = domString
+function createRenderer() {
+    // 渲染（虚拟节点，容器）
+    function render(domString, container) {
+        container.innerHTML = domString
+    }
+
+    function hydrate(domString, container) {
+        console.log(domString, container);
+    }
+
+    return {
+        render,
+        hydrate
+    }
 }

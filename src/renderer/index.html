@@ -16,9 +16,10 @@
 
     <script>
         const count = ref(1);
+        const { render } = createRenderer()
 
         effect(() => {
-            renderer(`<h1>${count.value}</h1>`, document.getElementById('app'));
+            render(`<h1>${count.value}</h1>`, document.getElementById('app'));
         })
 
         count.value++;

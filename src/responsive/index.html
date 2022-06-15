@@ -201,12 +201,25 @@
 
 
         // 原始值的响应方案 ref
-        const refVal = ref(1);
-        effect(() => {
-            console.log(refVal.value);
+        // const refVal = ref(1);
+        // effect(() => {
+        //     console.log(refVal.value);
+        // })
+
+        // refVal.value = 2
+
+        // 解决响应丢失问题
+        const obj = reactive({foo: 1, bar: 2});
+        
+        const newObj = { ...toRefs(obj) }
+
+        effect(()=>{
+            console.log(newObj.foo.value);
+            console.log(newObj.bar.value);
         })
 
-        refVal.value = 2
+        newObj.foo.value = 3
+
     </script>
 </body>
 </html>

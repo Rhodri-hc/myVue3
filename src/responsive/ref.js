@@ -66,3 +66,34 @@ function toRefs(obj) {
 
     return ret;
 }
+
+/**
+* @desc 自动脱ref
+* @author 张和潮
+* @date 2022年06月15日 09:35:47
+*/
+function proxyRef(target) {
+    return new Proxy(target, {
+        // 读取判断返回 value.value
+        get(target, key, receiver){
+            const value = Reflect.get(target, key, receiver)
+
+            return value._v_isRef ? value.value : value
+        },
+
+        // 拦截设置
+        set(target, key, newVal, receiver){
+            // 通过target读取真实值
+            const value = target[key];
+
+            // 如果值是Ref，则设置其对应的value属性值
+            if (value._v_isRef) {
+                value.value = newVal;
+
+                return true;
+            }
+            return Reflect.set(target, key, newVal, receiver);
+        }
+
+    })
+}

@@ -211,14 +211,14 @@
         // 解决响应丢失问题
         const obj = reactive({foo: 1, bar: 2});
         
-        const newObj = { ...toRefs(obj) }
+        const newObj = proxyRef({ ...toRefs(obj) });
 
         effect(()=>{
-            console.log(newObj.foo.value);
-            console.log(newObj.bar.value);
+            console.log(newObj.foo);
+            console.log(newObj.bar);
         })
 
-        newObj.foo.value = 3
+        newObj.foo = 3
 
     </script>
 </body>

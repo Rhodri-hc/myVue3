@@ -15,14 +15,26 @@
     <script src="createRenderer.js"></script>
 
     <script>
-        const count = ref(1);
-        const { render } = createRenderer()
+        // // 渲染器与响应式之间的结合
+        // const count = ref(1);
+        // const { render } = createRenderer()
 
-        effect(() => {
-            render(`<h1>${count.value}</h1>`, document.getElementById('app'));
-        })
+        // effect(() => {
+        //     render(`<h1>${count.value}</h1>`, document.getElementById('app'));
+        // })
 
-        count.value++;
+        // count.value++;
+
+        // 自定义渲染器
+        const vNode = {
+            type: 'h1',
+            children: "hello Vue3"
+        }
+
+        // 采用浏览器渲染配置创建渲染器
+        const { render } = createRenderer(BROWSER_RENDER_CONFIG)
+
+        render(vNode, document.querySelector('#app'))
     </script>
 </body>
 </html>

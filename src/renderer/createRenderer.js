@@ -72,6 +72,20 @@ function createRenderer(options) {
     const { createElement, setElementText, insert, patchProps} = options;
 
     /**
+    * @desc 卸载元素
+    * @author 张和潮
+    * @date 2022年06月16日 17:35:25
+    */
+    function unmount(vNode) {
+        // 获取 el 的父元素
+        const parent = vNode.el.parentNode
+        // 调用 removeChild 移除元素
+        if (parent) {
+            parent.removeChild(vNode.el)
+        }
+    }
+
+    /**
     * @desc 挂载元素
     * @params { Object } vNode 虚拟节点
     * @params { Object } container DOM节点容器
@@ -80,7 +94,8 @@ function createRenderer(options) {
     */
     function mountElement(vNode, container) {
         // 调用createElement 创建元素
-        const el = createElement(vNode.type);
+        // 让vNode.el 引用真实DOM 元素
+        const el = vNode.el = createElement(vNode.type);
 
         // 处理子节点，如果子节点是字符串，代表元素具有文本节点
         if (typeof vNode.children === 'string') {
@@ -141,8 +156,17 @@ function createRenderer(options) {
         }else{
             if (container._vNode) {
                 // 旧vNode 存在，且新 vNode 不存在，说明是卸载 （unmount）操作
-                // 只需要将container 内的DOM 清空即可
-                container.innerHTML = ""
+                // 只需要将container 内的DOM 清空即可，但是这样做的话不严谨，三点原因：
+                /**
+                 * 1、如果是组件需要触发组件的beforeUnmount、unMounted 等生命周期函数
+                 * 2、如果存在自定义指令，在卸载操作发生时正确执行对应的指令钩子函数
+                 * 3、使用innerHTML清空，不会溢出绑定在DOM元素上的事件处理函数
+                 */
+                // container.innerHTML = "" ××
+
+                // 根据 vNode获取要卸载的真实 DOM 元素
+                // 调用 unmount 函数卸载 vNode
+                unmount(container._vNode)
             }
         }
         // 把 vNode 存储到 container._vNode 下，即后续渲染中的 vNode

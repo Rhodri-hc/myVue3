@@ -50,6 +50,7 @@
             type: 'div',
             props: {
                 id: "foo",
+                // 需要将class 进行数据结构转换为字符串
                 class: "bg textColor"
             },
             children: [
@@ -64,6 +65,11 @@
         const { render } = createRenderer(BROWSER_RENDER_CONFIG)
 
         render(vNode, document.querySelector('#app'))
+
+        // 卸载操作
+        setTimeout(()=> {
+            render(null, document.querySelector('#app'))
+        }, 5000)
     </script>
 </body>
 </html>

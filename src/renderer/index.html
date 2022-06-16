@@ -25,10 +25,29 @@
 
         // count.value++;
 
-        // 自定义渲染器
+        // // 自定义渲染器
+        // const vNode = {
+        //     type: 'h1',
+        //     children: "hello Vue3"
+        // }
+
+        // // 采用浏览器渲染配置创建渲染器
+        // const { render } = createRenderer(BROWSER_RENDER_CONFIG)
+
+        // render(vNode, document.querySelector('#app'))
+
+        // 挂载子节点和元素的属性
         const vNode = {
-            type: 'h1',
-            children: "hello Vue3"
+            type: 'div',
+            props: {
+                id: "foo"
+            },
+            children: [
+                {
+                    type: "p",
+                    children: "hello, Rhodri!"
+                }
+            ]
         }
 
         // 采用浏览器渲染配置创建渲染器

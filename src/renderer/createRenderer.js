@@ -18,7 +18,41 @@ const BROWSER_RENDER_CONFIG = {
     // el 要插入节点， parent 父节点，anchor 被参照的节点（即要插在该节点之前）
     insert(el, parent, anchor = null){
         parent.insertBefore(el, anchor)
+    },
+    // 将属性设置相关操作封装到 patchProps函数中，并作为渲染器选项传递
+    patchProps(el, key, prevValue, nextValue){
+        // 用 in 操作符判断key 是否存在对应的 DOM Properties
+        if (shouldSetAsProps(el, key, nextValue)) {
+            // 获取该 DOM Properties 的类型
+            const type = typeof el[key]
+
+            // 如果是布尔类型，并且value 是空字符串，则将值矫正为true
+            if (type === 'boolean' && nextValue === '') {
+                el[key] = true;
+            } else {
+                el[key] = nextValue;
+            }  
+        }
+        // 如果要设置的属性没有对应的 DOM Properties，则使用setAttribute 函数设置属性
+        else {
+            el.setAttribute(key, nextValue)
+        }
     }
+}
+
+/**
+* @desc 设置属性特殊处理
+* @author 张和潮
+* @date 2022年06月16日 16:41:56
+*/
+function shouldSetAsProps(el, key, value) {
+    // 特殊处理
+    if (key === 'form' && el.tagName === 'INPUT') {
+        return false;
+    }
+
+    // 兜底
+    return key in el
 }
 
 
@@ -29,7 +63,7 @@ const BROWSER_RENDER_CONFIG = {
 * @date 2022年06月15日 22:03
 */
 function createRenderer(options) {
-    const { createElement, setElementText, insert} = options;
+    const { createElement, setElementText, insert, patchProps} = options;
 
     /**
     * @desc 挂载元素
@@ -46,6 +80,21 @@ function createRenderer(options) {
         if (typeof vNode.children === 'string') {
             // 调用setElementText 创建文本节点
             setElementText(el, vNode.children);
+        } else if(Array.isArray(vNode.children)){
+            // 如果 children 是数组，则遍历每一个子节点，并调用patch函数挂载他们
+            vNode.children.forEach(child => {
+                patch(null, child, el);
+            })
+        }
+
+        // 如果vNode.props 存在才处理
+        if (vNode.props) {
+            // 遍历 vNode.props
+            for(const key in vNode.props){
+                const value = vNode.props[key];
+                // 调用 patchProps 函数即可
+                patchProps(el, key, null, value);
+            }
         }
 
         // 调用 insert 函数将元素插入到容器内

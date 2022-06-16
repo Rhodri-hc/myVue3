@@ -5,6 +5,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>渲染器</title>
+
+    <style>
+        .bg{
+            background: #abcdef;
+        } 
+        .textColor{
+            color: #666;
+        }
+    </style>
 </head>
 <body>
     <div id="app"></div>
@@ -40,7 +49,8 @@
         const vNode = {
             type: 'div',
             props: {
-                id: "foo"
+                id: "foo",
+                class: "bg textColor"
             },
             children: [
                 {

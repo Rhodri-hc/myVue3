@@ -21,8 +21,14 @@ const BROWSER_RENDER_CONFIG = {
     },
     // 将属性设置相关操作封装到 patchProps函数中，并作为渲染器选项传递
     patchProps(el, key, prevValue, nextValue){
+
+        // 对class 进行特殊处理
+        if (key === 'class') {
+            // 在el.className setAttribute el.classList 中 el.className性能最好
+            el.className = nextValue || '';
+        }
         // 用 in 操作符判断key 是否存在对应的 DOM Properties
-        if (shouldSetAsProps(el, key, nextValue)) {
+        else if (shouldSetAsProps(el, key, nextValue)) {
             // 获取该 DOM Properties 的类型
             const type = typeof el[key]
 

@@ -71,31 +71,58 @@
         //     render(null, document.querySelector('#app'))
         // }, 5000)
 
-        // 区分 vNode 类型
-        const n1 = {
+        // // 区分 vNode 类型
+        // const n1 = {
+        //     type: 'p',
+        //     props: {
+        //         id: "foo",
+        //     },
+        //     children:"准备变身"
+        // }
+        // const n2 = {
+        //     type: 'input',
+        //     props: {
+        //         type: "submit",
+        //     }
+        // }
+
+        // // 采用浏览器渲染配置创建渲染器
+        // const { render } = createRenderer(BROWSER_RENDER_CONFIG)
+
+        // render(n1, document.querySelector('#app'))
+
+     
+        // setTimeout(()=> {
+        //     render(n2, document.querySelector('#app'))
+        // }, 3000)
+
+        // 事件处理
+        const vNode = {
             type: 'p',
             props: {
                 id: "foo",
+                onClick:[
+                    ()=>{
+                       console.log('clicked132');
+                    },
+                    ()=>{
+                       console.log('clicked456');
+                    },
+                ],
+                onContextmenu: () => {
+                    console.log('contextmenu');
+                } 
             },
             children:"准备变身"
         }
-        const n2 = {
-            type: 'input',
-            props: {
-                type: "submit",
-            }
-        }
+        
 
         // 采用浏览器渲染配置创建渲染器
         const { render } = createRenderer(BROWSER_RENDER_CONFIG)
 
-        render(n1, document.querySelector('#app'))
+        render(vNode, document.querySelector('#app'))
 
      
-        setTimeout(()=> {
-            render(n2, document.querySelector('#app'))
-        }, 3000)
-
     </script>
 </body>
 </html>

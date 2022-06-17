@@ -36,6 +36,12 @@ const BROWSER_RENDER_CONFIG = {
                     // vei 是 vue event invoker的首字母缩写
                     // 将事件处理函数缓存到 el._vei[key]下，避免覆盖
                     invoker = el._vei[key] = (e) => {
+                        // e.timeStamp 是事件发生的时间
+                        // 如果事件发生的时间早于事件处理绑定的时间，则不执行时间处理函数
+                        if (e.timeStamp < invoker.attached) {
+                            return;
+                        }
+
                         // 如果 invoker.value是数组，则遍历它，并逐个调用处理函数
                         if(Array.isArray(invoker.value)){
                             invoker.value.forEach(fn => fn(e))
@@ -46,6 +52,8 @@ const BROWSER_RENDER_CONFIG = {
                     }
                     // 将真正的事件处理函数赋值给 invoker.value
                     invoker.value = nextValue
+                    // 添加invoker.attached 属性，存储事件处理函数被绑定的时间
+                    invoker.attached = performance.now()
                     // 绑定 invoker 作为事件处理函数
                     el.addEventListener(name, invoker)
                 }else {

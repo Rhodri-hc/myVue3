@@ -96,31 +96,65 @@
         //     render(n2, document.querySelector('#app'))
         // }, 3000)
 
-        // 事件处理
-        const vNode = {
-            type: 'p',
-            props: {
-                id: "foo",
-                onClick:[
-                    ()=>{
-                       console.log('clicked132');
-                    },
-                    ()=>{
-                       console.log('clicked456');
-                    },
-                ],
-                onContextmenu: () => {
-                    console.log('contextmenu');
-                } 
-            },
-            children:"准备变身"
-        }
+        // // 事件处理
+        // const vNode = {
+        //     type: 'p',
+        //     props: {
+        //         id: "foo",
+        //         onClick:[
+        //             ()=>{
+        //                console.log('clicked132');
+        //             },
+        //             ()=>{
+        //                console.log('clicked456');
+        //             },
+        //         ],
+        //         onContextmenu: () => {
+        //             console.log('contextmenu');
+        //         } 
+        //     },
+        //     children:"准备变身"
+        // }
         
 
-        // 采用浏览器渲染配置创建渲染器
+        // // 采用浏览器渲染配置创建渲染器
+        // const { render } = createRenderer(BROWSER_RENDER_CONFIG)
+
+        // render(vNode, document.querySelector('#app'))
+
+
+        // 事件冒泡与更新时机问题
+        const bol = ref(false);
+
         const { render } = createRenderer(BROWSER_RENDER_CONFIG)
 
-        render(vNode, document.querySelector('#app'))
+
+        effect(()=> {
+            // 创建vNode
+            const vNode = {
+                type: 'div',
+                props: bol.value ? {
+                    onClick: () => {
+                        console.log('父元素 clicked');
+                    }
+                } : {},
+                children:[
+                    {
+                        type: 'p',
+                        props: {
+                            onClick: ()=> {
+                                bol.value = true;
+                            }
+                        },
+                        children: 'text'
+                    }
+                ]
+            }
+
+            render(vNode, document.querySelector('#app'))
+        })
+
+    
 
      
     </script>

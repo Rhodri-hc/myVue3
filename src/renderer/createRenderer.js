@@ -167,6 +167,54 @@ function createRenderer(options) {
     }
 
     /**
+    * @desc 更新元素
+    * @params { Object } n1 旧vNode
+    * @params { Object } n2 新vNode
+    * @author 张和潮
+    * @date 2022年06月17日 18:02:31
+    */
+    function patchElement(n1, n2){
+        // 保存el DOM 到 n2 vNode上
+        const el = n2.el = n1.el;
+
+        const oldProps = n1.props;
+        const newProps = n2.props;
+
+        // 第一步：更新props
+        for (const key in newProps) {
+            if (newProps[key] !== oldProps[key]) {
+                patchProps(el, key, oldProps[key], newProps[key]);
+            }
+        }
+        for (const key in oldProps) {
+            if (!(key in newProps)) {
+                patchProps(el, key, oldProps[key], null);
+            }
+        }
+
+        // 第二步：更新children
+        patchChildren(n1, n2, el)
+    }
+
+    /**
+    * @desc 更新子节点
+    * @author 张和潮
+    * @date 2022年06月17日 18:11:38
+    */
+    function patchChildren(n1, n2, container){
+        // 判断新子节点的类型是否是文本节点
+        if (typeof n2.children === 'string') {
+            // 旧子节点的类型有三种可能，没有子节点、文本子节点以及一组子节点
+            // 只有当旧子节点为一组子节点时，才需要逐个卸载，其他情况下什么都不需要做
+            if (Array.isArray(n1.children)) {
+                n1.children.forEach(c => unmount(c))
+            }
+            // 最后将新的文本节点内容设置容器元素
+            setElementText(container, n2.children)
+        }
+    }
+
+    /**
     * @desc 挂载与更新
     * @params { Object } n1 旧vNode
     * @params { Object } n2 新vNode
@@ -192,7 +240,7 @@ function createRenderer(options) {
             } 
             // n1 存在，意味着打补丁
             else{
-                // patchElement(n1, n2)
+                patchElement(n1, n2)
             }
             
         } else if (typeof type === "object"){

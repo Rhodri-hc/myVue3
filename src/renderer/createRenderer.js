@@ -43,9 +43,9 @@ const BROWSER_RENDER_CONFIG = {
                         }
 
                         // 如果 invoker.value是数组，则遍历它，并逐个调用处理函数
-                        if(Array.isArray(invoker.value)){
+                        if (Array.isArray(invoker.value)) {
                             invoker.value.forEach(fn => fn(e))
-                        }else{
+                        } else {
                             // 当伪造的时间处理函数执行时，会执行真正的事件处理函数
                             invoker.value(e)
                         }
@@ -163,7 +163,7 @@ function createRenderer(options) {
         }
 
         // 调用 insert 函数将元素插入到容器内
-        insert(el, container)
+        insert(el, container);
     }
 
     /**
@@ -211,6 +211,29 @@ function createRenderer(options) {
             }
             // 最后将新的文本节点内容设置容器元素
             setElementText(container, n2.children)
+        } else if(Array.isArray(n2.children)){
+            // 说明新子节点是一组子节点
+            // 判断旧子节点是否也是一组子节点
+            if(Array.isArray(n1.children)){
+                // 将旧的一组子节点全部卸载
+                n1.children.forEach(c => unmount(c));
+                // 再将新的一组子节点全部挂载到容器中
+                n2.children.forEach(c => patch(null, c, container));
+            } else {
+                // 旧子节点要么是文本节点，要么不存在
+                // 无论那种情况，我们都只需要将容器清空，然后将新的一组子节点逐个卸载
+                setElementText(container, "");
+                n2.children.forEach(c => patch(null, c, container));
+            }
+        } else {
+            // 说明新子节点不存在
+            // 旧子节点是一组子节点，只需逐个卸载即可
+            if (Array.isArray(n1.children)) {
+                n1.children.forEach(c => unmount(c));
+            }else if (typeof n1.children === 'string') {
+                // 旧子节点是文本子节点，清空内容即可
+                setElementText(container, '')
+            }
         }
     }
 

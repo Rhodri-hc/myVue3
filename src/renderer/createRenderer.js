@@ -8,6 +8,8 @@
 var Text = Symbol();
 // 注释节点的 type 标识
 var Comment = Symbol();
+// Fragment 片段的 type 标识
+var Fragment = Symbol();
 
 // 浏览器渲染配置
 const BROWSER_RENDER_CONFIG = {
@@ -134,13 +136,20 @@ function createRenderer(options) {
         createText, 
         setText
     } = options;
-    
+
     /**
     * @desc 卸载元素
     * @author 张和潮
     * @date 2022年06月16日 17:35:25
     */
     function unmount(vNode) {
+        // 在卸载时，如果卸载的 vNode 类型为 Fragment, 则需要卸载其 children
+        if (vNode.type === Fragment) {
+            vNode.children.forEach(c => unmount(c));
+            return;
+        }
+
+
         // 获取 el 的父元素
         const parent = vNode.el.parentNode
         // 调用 removeChild 移除元素
@@ -303,6 +312,15 @@ function createRenderer(options) {
                     // 调用setText 函数更新文本节点的内容
                     setText(el, n2.children);
                 }
+            }
+        } else if(type === Fragment){
+            // 处理 Fragment 类型的 vNode
+            if(!n1){
+                // 如果旧 vNode 不存在，则只需要将 Fragmnet 的children 逐个挂载即可
+                n2.children.forEach(c => patch(null, c, container));
+            } else {
+                // 如果旧 vNode 存在，则只需要更新 Fragment 的 children 即可
+                patchChildren(n1, n2, container);
             }
         }
         // ...处理其他类型的node

@@ -155,16 +155,35 @@
         // });
 
 
-        // 文本节点
+        // // 文本节点
+        // const { render } = createRenderer(BROWSER_RENDER_CONFIG)
+
+        // const newVnode = {
+        //     type: Text,
+        //     children: '我是文本节点'
+        // }
+
+        // render(newVnode, document.querySelector('#app'))
+
+        // Fragment 片段
         const { render } = createRenderer(BROWSER_RENDER_CONFIG)
 
         const newVnode = {
-            type: Text,
-            children: '我是文本节点'
+            type: 'ul',
+            children:[
+                {
+                    type: Fragment,
+                    children: [
+                        { type: 'li', children: 'text1' },
+                        { type: 'li', children: 'text2' },
+                        { type: 'li', children: 'text3' }
+                    ]
+                }
+            ]
         }
 
         render(newVnode, document.querySelector('#app'))
-  
+        
 
      
     </script>

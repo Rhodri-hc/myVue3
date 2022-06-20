@@ -4,6 +4,11 @@
  *          更新的时候，会通过Diff算法找出变更点，并且只会更新需要更新的内容。
  * 
  */
+// 文本节点的 type 标识
+var Text = Symbol();
+// 注释节点的 type 标识
+var Comment = Symbol();
+
 // 浏览器渲染配置
 const BROWSER_RENDER_CONFIG = {
     // 用于创建元素
@@ -13,6 +18,14 @@ const BROWSER_RENDER_CONFIG = {
     // 用于设置元素的文本节点
     setElementText(el, text){
         el.textContent = text;
+    },
+    // 创建文本节点
+    createText(text){
+        return document.createTextNode(text);
+    },
+    // 设置文本节点的文本
+    setText(el, text){
+        el.nodeValue = text;
     },
     // 用于在给定的parent 下添加指定元素
     // el 要插入节点， parent 父节点，anchor 被参照的节点（即要插在该节点之前）
@@ -113,8 +126,15 @@ function shouldSetAsProps(el, key, value) {
 * @date 2022年06月15日 22:03
 */
 function createRenderer(options) {
-    const { createElement, setElementText, insert, patchProps} = options;
-
+    const { 
+        createElement, 
+        setElementText, 
+        insert, 
+        patchProps, 
+        createText, 
+        setText
+    } = options;
+    
     /**
     * @desc 卸载元素
     * @author 张和潮
@@ -222,7 +242,7 @@ function createRenderer(options) {
             } else {
                 // 旧子节点要么是文本节点，要么不存在
                 // 无论那种情况，我们都只需要将容器清空，然后将新的一组子节点逐个卸载
-                setElementText(container, "");
+                setElementText(container, '');
                 n2.children.forEach(c => patch(null, c, container));
             }
         } else {
@@ -269,7 +289,22 @@ function createRenderer(options) {
         } else if (typeof type === "object"){
             // 如果n2.type 的值的类型是对象，则它描述的是组件
 
-        } 
+        } else if(type === Text){
+            // 处理文本节点
+            if (!n1) {
+                // 调用 createText 函数创建文本节点
+                const el = n2.el = createText(n2.children);
+                // 将文本节点插入容器中
+                insert(el, container);
+            } else{
+                // 如果旧 vNode 存在，只需要使用新文本节点的文本内容更新旧文本节点即可
+                const el = n2.el = n1.el;
+                if (n1.children !== n2.children) {
+                    // 调用setText 函数更新文本节点的内容
+                    setText(el, n2.children);
+                }
+            }
+        }
         // ...处理其他类型的node
     }
 

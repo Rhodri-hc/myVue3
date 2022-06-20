@@ -21,7 +21,7 @@
     <script src="../responsive/proxy.js"></script>
     <script src="../responsive/reactive.js"></script>
     <script src="../responsive/ref.js"></script>
-    <script src="createRenderer.js"></script>
+    <script src="./createRenderer.js"></script>
 
     <script>
         // // 渲染器与响应式之间的结合
@@ -123,38 +123,48 @@
         // render(vNode, document.querySelector('#app'))
 
 
-        // 事件冒泡与更新时机问题
-        const bol = ref(false);
+        // // 事件冒泡与更新时机问题
+        // const bol = ref(false);
 
+        // const { render } = createRenderer(BROWSER_RENDER_CONFIG)
+
+
+        // effect(()=> {
+        //     // 创建vNode
+        //     const vNode = {
+        //         type: 'div',
+        //         props: bol.value ? {
+        //             onClick: () => {
+        //                 console.log('父元素 clicked');
+        //             }
+        //         } : {},
+        //         children:[
+        //             {
+        //                 type: 'p',
+        //                 props: {
+        //                     onClick: ()=> {
+        //                         bol.value = true;
+        //                     }
+        //                 },
+        //                 children: 'text'
+        //             }
+        //         ]
+        //     }
+
+        //     render(vNode, document.querySelector('#app'))
+        // });
+
+
+        // 文本节点
         const { render } = createRenderer(BROWSER_RENDER_CONFIG)
 
+        const newVnode = {
+            type: Text,
+            children: '我是文本节点'
+        }
 
-        effect(()=> {
-            // 创建vNode
-            const vNode = {
-                type: 'div',
-                props: bol.value ? {
-                    onClick: () => {
-                        console.log('父元素 clicked');
-                    }
-                } : {},
-                children:[
-                    {
-                        type: 'p',
-                        props: {
-                            onClick: ()=> {
-                                bol.value = true;
-                            }
-                        },
-                        children: 'text'
-                    }
-                ]
-            }
-
-            render(vNode, document.querySelector('#app'))
-        })
-
-    
+        render(newVnode, document.querySelector('#app'))
+  
 
      
     </script>

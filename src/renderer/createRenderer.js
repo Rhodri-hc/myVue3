@@ -244,10 +244,14 @@ function createRenderer(options) {
             // 说明新子节点是一组子节点
             // 判断旧子节点是否也是一组子节点
             if(Array.isArray(n1.children)){
-                // 将旧的一组子节点全部卸载
-                n1.children.forEach(c => unmount(c));
-                // 再将新的一组子节点全部挂载到容器中
-                n2.children.forEach(c => patch(null, c, container));
+                // 粗暴解法
+                // // 将旧的一组子节点全部卸载
+                // n1.children.forEach(c => unmount(c));
+                // // 再将新的一组子节点全部挂载到容器中
+                // n2.children.forEach(c => patch(null, c, container));
+
+                // 简单diff 算法
+                easyDiff(n1, n2, container);
             } else {
                 // 旧子节点要么是文本节点，要么不存在
                 // 无论那种情况，我们都只需要将容器清空，然后将新的一组子节点逐个卸载
@@ -263,6 +267,40 @@ function createRenderer(options) {
                 // 旧子节点是文本子节点，清空内容即可
                 setElementText(container, '')
             }
+        }
+    }
+
+
+    /**
+     * diff 算法：新旧两组子节点的对比算法
+     */
+
+    /**
+    * @desc 简单diff算法
+    * @params { Object } n1 旧vNode
+    * @params { Object } n2 新vNode
+    * @params { Object } container dom
+    * @author 张和潮
+    * @date 2022年06月21日 22:44
+    */
+    function easyDiff(n1, n2, container){
+        const oldChildren = n1.children;
+        const newChildren = n2.children;
+
+        // 遍历新的子节点
+        for (let i = 0; i < newChildren.length; i++) {
+        const newVNode = newChildren[i];
+        // 遍历旧的子节点
+        for (let j = 0; j < oldChildren.length; j++) {
+            const oldVNode = oldChildren[j];
+            // 如果找到了具有相同 key 值的两个节点，说明可以复用，但仍然需要调用patch 函数更新
+            if (newVNode.key === oldVNode.key) {
+                patch(oldVNode, newVNode, container)
+
+                break;
+            }
+        }
+
         }
     }
 

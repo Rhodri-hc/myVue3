@@ -162,10 +162,11 @@ function createRenderer(options) {
     * @desc 挂载元素
     * @params { Object } vNode 虚拟节点
     * @params { Object } container DOM节点容器
+    * @params { Object } anchor 挂载锚点
     * @author 张和潮
     * @date 2022年06月16日 15:41:55
     */
-    function mountElement(vNode, container) {
+    function mountElement(vNode, container, anchor) {
         // 调用createElement 创建元素
         // 让vNode.el 引用真实DOM 元素
         const el = vNode.el = createElement(vNode.type);
@@ -192,7 +193,7 @@ function createRenderer(options) {
         }
 
         // 调用 insert 函数将元素插入到容器内
-        insert(el, container);
+        insert(el, container, anchor);
     }
 
     /**
@@ -293,12 +294,20 @@ function createRenderer(options) {
         // 遍历新的子节点
         for (let i = 0; i < newChildren.length; i++) {
             const newVNode = newChildren[i];
-            let j = 0
+            let j = 0;
+            
+            // 在第一层循环中定义变量find，代表是都在旧的一组子节点中找到可复用的节点
+            // 初始值为false，代表没找到
+            let find = false;
+
             // 遍历旧的子节点
             for ( j ; j < oldChildren.length; j++) {
                 const oldVNode = oldChildren[j];
                 // 如果找到了具有相同 key 值的两个节点，说明可以复用，但仍然需要调用patch 函数更新
                 if (newVNode.key === oldVNode.key) {
+                    // 一旦找到可复用的节点，则将变量find的值设为true
+                    find = true;
+
                     patch(oldVNode, newVNode, container)
 
                     if (j < lastIndex) {
@@ -324,6 +333,28 @@ function createRenderer(options) {
                     break;
                 }
             }
+            // 如果代码运行到这里，find 仍然为false
+            // 说明当前 newVNode 没有在旧的一组子节点中找到可复用的节点
+            // 也就是说，当前 newVNode 是新增节点，需要挂载
+            if (!find) {
+                // 为了将节点挂载到正确位置，我们需要先获取锚点元素
+                // 首先获取当前 newVNode 的前一个 vNode 节点
+                const prevVNode = newChildren[i - 1];
+                let anchor = null;
+
+                if (prevVNode) {
+                    // 如果有迁移vNode节点， 则使用它的下一个兄弟节点作为锚点元素
+                    anchor = prevVNode.el.nextSibling;
+                } else {
+                    // 如果没有前一个 vNode 节点，说明即将挂载的新节点是第一个子节点
+                    // 这时我们使用容器元素的 firstChild 作为锚点
+                    anchor = container.firstChild;
+                }
+
+                // 挂载newVNode
+                patch(null, newVNode, container, anchor)
+            }
+
 
         }
     }
@@ -333,10 +364,11 @@ function createRenderer(options) {
     * @params { Object } n1 旧vNode
     * @params { Object } n2 新vNode
     * @params { Object } container DOM节点容器
+    * @params { Object } anchor 挂载锚点
     * @author 张和潮
     * @date 2022年06月16日 15:31:32
     */
-    function patch(n1, n2, container) {
+    function patch(n1, n2, container, anchor) {
         // 如果n1 存在，则对比 n1 和 n2 的类型
         if (n1 && n1.type !== n2.type) {
             // 如果新旧 vNode 的类型不同，直接将旧vNode 卸载
@@ -350,7 +382,7 @@ function createRenderer(options) {
         if (typeof type === "string") {
             // 如果n1 不存在，意味着挂载，则调用 mountElement 函数完成挂载
             if (!n1) {
-                mountElement(n2, container)
+                mountElement(n2, container, anchor)
             } 
             // n1 存在，意味着打补丁
             else{

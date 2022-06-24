@@ -304,13 +304,17 @@ function createRenderer(options) {
         let newEndVNode = newChildren[newEndIdx];
 
         while (oldStartIdx <= oldEndIdx &&  newStartIdx <= newEndIdx) {
-            if (oldStartVNode.key === newStartVNode.key) {
+            if (!oldStartVNode) {
+                oldStartVNode = oldChildren[++oldStartIdx]
+            } else if (!oldEndVNode) {
+                oldEndVNode = oldChildren[--oldEndIdx]
+            } else if (oldStartVNode.key === newStartVNode.key) {
                 // 第一步：oldStartVNode 和 newStartVNode 比较
                 // 节点在新的顺序中仍然处于头部，不需要移动，但仍需打补丁
                 patch(oldStartVNode, newStartVNode, container);
                 // 更新索引和头尾部节点变量
-                oldStartVNode = oldChildren[++oldEndIdx];
-                newStartVNode = newChildren[++newEndIdx];
+                oldStartVNode = oldChildren[++oldStartIdx];
+                newStartVNode = newChildren[++newStartIdx];
             } else if (oldEndVNode.key === newEndVNode.key) {
                 // 第二步：oldEndVNode 和 newEndVNode 比较
                 // 节点在新的顺序中仍然处于尾部，不需要移动，但仍需打补丁
@@ -341,6 +345,27 @@ function createRenderer(options) {
                 // 移动DOM 完成后，更新索引值，并指向下一个位置
                 oldEndVNode = oldChildren[--oldEndIdx];
                 newStartVNode = newChildren[++newStartIdx];
+            } else{
+                // 遍历旧的一组子节点，试图寻找与 newstartVNode 拥有相同的key 值的节点
+                // idxInOld 就是新的一组子节点的头部节点在旧的一组子节点中的索引
+                const idxInOld = oldChildren.findIndex(
+                    node => node.key === newStartVNode.key
+                );
+
+                // idxInOld 大于 0 说明找到了可复用的节点，并且需要将其对应的真实DOM 移动到头部
+                if (idxInOld > 0) {
+                    // 需要移动的节点
+                    const vNodeToMove = oldChildren[idxInOld];
+                    // 打补丁
+                    patch(vNodeToMove, newStartVNode, container);
+                    // 将 vnodeToMove.el 移动到头部节点 newStartVNode.el 之前
+                    insert(vnodeToMove.el, container, oldStartVNode.el);
+
+                    oldChildren[idxInOld] = undefined;
+
+                    // 更新newStarVNode 到下一个位置
+                    newStartVNode = newChildren[++newStartIdx];
+                }
             }
         }
    }

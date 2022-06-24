@@ -252,7 +252,10 @@ function createRenderer(options) {
                 // n2.children.forEach(c => patch(null, c, container));
 
                 // 简单diff 算法
-                easyDiff(n1, n2, container);
+                // easyDiff(n1, n2, container);
+
+                // 双端diff 算法
+                patchKeyChildren(n1, n2, container);
             } else {
                 // 旧子节点要么是文本节点，要么不存在
                 // 无论那种情况，我们都只需要将容器清空，然后将新的一组子节点逐个卸载
@@ -275,6 +278,73 @@ function createRenderer(options) {
     /**
      * diff 算法：新旧两组子节点的对比算法
      */
+
+    /**
+    * @desc 双端 diff 算法
+    * @params { Object } n1 旧vNode
+    * @params { Object } n2 新vNode
+    * @params { Object } container dom
+    * @author 张和潮
+    * @date 2022年06月24日 21:50
+    */
+   function patchKeyChildren(n1, n2, container) {
+        const oldChildren = n1.children;
+        const newChildren = n2.children;
+
+        // 四个索引值
+        let oldStartIdx = 0;
+        let oldEndIdx = oldChildren.length - 1;
+        let newStartIdx = 0;
+        let newEndIdx = newChildren.length - 1;
+
+        // 四个索引指向的vNode 节点
+        let oldStartVNode = oldChildren[oldStartIdx];
+        let oldEndVNode = oldChildren[oldEndIdx];
+        let newStartVNode = newChildren[newStartIdx];
+        let newEndVNode = newChildren[newEndIdx];
+
+        while (oldStartIdx <= oldEndIdx &&  newStartIdx <= newEndIdx) {
+            if (oldStartVNode.key === newStartVNode.key) {
+                // 第一步：oldStartVNode 和 newStartVNode 比较
+                // 节点在新的顺序中仍然处于头部，不需要移动，但仍需打补丁
+                patch(oldStartVNode, newStartVNode, container);
+                // 更新索引和头尾部节点变量
+                oldStartVNode = oldChildren[++oldEndIdx];
+                newStartVNode = newChildren[++newEndIdx];
+            } else if (oldEndVNode.key === newEndVNode.key) {
+                // 第二步：oldEndVNode 和 newEndVNode 比较
+                // 节点在新的顺序中仍然处于尾部，不需要移动，但仍需打补丁
+                patch(oldEndVNode, newEndVNode, container);
+                // 更新索引和头尾部节点变量
+                oldEndVNode = oldChildren[--oldEndIdx];
+                newEndVNode = newChildren[--newEndIdx];
+            } else if (oldStartVNode.key === newEndVNode.key) {
+                // 第三步：oldStartVNode 和 newEndVNode 比较
+                // 调用patch 打补丁
+                patch(oldStartVNode, newEndVNode, container);
+                // 将旧的一组子节点的头部节点对应的额真实DOM 节点 oldStartVNode.el 移动到
+                // 旧的一组子节点的尾部节点对应的真实DOM 节点后面
+                insert(oldStartVNode.el, container, oldEndVNode.el.nextSibling)
+
+                // 更新索引以及位置
+                oldStartVNode = oldChildren[++oldStartIdx];
+                newEndVNode = newChildren[--newEndIdx];
+            } else if (oldEndVNode.key === newStartVNode.key) {
+                // 第四步：oldEndVNode 和 newStartVNode 比较
+                // 仍然需要调用patch 函数进行打补丁
+                patch(oldEndVNode, newStartVNode, container);
+
+                // 移动DOM 操作
+                // oldEndVNode.el 移动到 oldStartVNode.el 前面
+                insert(oldEndVNode.el, container, oldStartVNode.el);
+
+                // 移动DOM 完成后，更新索引值，并指向下一个位置
+                oldEndVNode = oldChildren[--oldEndIdx];
+                newStartVNode = newChildren[++newStartIdx];
+            }
+        }
+   }
+
 
     /**
     * @desc 简单diff算法

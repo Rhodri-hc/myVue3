@@ -255,7 +255,7 @@ function createRenderer(options) {
                 // easyDiff(n1, n2, container);
 
                 // 双端diff 算法
-                patchKeyChildren(n1, n2, container);
+                doubleEndDiff(n1, n2, container);
             } else {
                 // 旧子节点要么是文本节点，要么不存在
                 // 无论那种情况，我们都只需要将容器清空，然后将新的一组子节点逐个卸载
@@ -287,7 +287,7 @@ function createRenderer(options) {
     * @author 张和潮
     * @date 2022年06月24日 21:50
     */
-   function patchKeyChildren(n1, n2, container) {
+   function doubleEndDiff(n1, n2, container) {
         const oldChildren = n1.children;
         const newChildren = n2.children;
 
@@ -358,14 +358,25 @@ function createRenderer(options) {
                     const vNodeToMove = oldChildren[idxInOld];
                     // 打补丁
                     patch(vNodeToMove, newStartVNode, container);
-                    // 将 vnodeToMove.el 移动到头部节点 newStartVNode.el 之前
-                    insert(vnodeToMove.el, container, oldStartVNode.el);
+                    // 将 vNodeToMove.el 移动到头部节点 newStartVNode.el 之前
+                    insert(vNodeToMove.el, container, oldStartVNode.el);
 
                     oldChildren[idxInOld] = undefined;
 
-                    // 更新newStarVNode 到下一个位置
-                    newStartVNode = newChildren[++newStartIdx];
+                } else{
+                    // 将newStartVNode 作为新节点挂载到头部，使用当前头部节点 oldStartVNode.el 作为锚点
+                    patch(null, newStartVNode, container, oldStartVNode.el)
                 }
+                // 更新newStarVNode 到下一个位置
+                newStartVNode = newChildren[++newStartIdx];
+            }
+        }
+
+        // 循环结束后检查索引值的情况
+        if (oldEndIdx < oldStartIdx && newStartIdx <= newEndIdx) {
+            // 如果满足条件，则说明有新的节点遗留，需要挂载它们
+            for (let i = newStartIdx; i <= newEndIdx; i++) {
+                patch(null, newChildren[i], container, oldStartVNode.el) 
             }
         }
    }

@@ -378,6 +378,11 @@ function createRenderer(options) {
             for (let i = newStartIdx; i <= newEndIdx; i++) {
                 patch(null, newChildren[i], container, oldStartVNode.el) 
             }
+        } else if (newEndIdx < newStartIdx && oldStartIdx <= oldEndIdx) {
+             // 移除操作
+             for (let i = oldStartIdx; i <= oldEndIdx; i++) {
+                unmount(oldChildren[i])
+            }
         }
    }
 

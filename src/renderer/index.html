@@ -210,7 +210,37 @@
         //     render(newVnode, document.querySelector('#app'))
         // }, 1000)
 
-        // 双端diff算法
+        // // 双端diff算法
+        // const { render } = createRenderer(BROWSER_RENDER_CONFIG)
+
+        // const oldVnode = {
+        //     type: 'div',
+        //     children:[
+        //         { type: 'p', children: 'p-1', key: 1 },
+        //         { type: 'P', children: 'p-2', key: 2 },
+        //         { type: 'P', children: 'p-3', key: 3},
+         
+        //     ]
+        // }
+
+        // const newVnode = {
+        //     type: 'div',
+        //     children:[
+        //         // { type: 'P', children: 'p-2', key: 2 },
+        //         // { type: 'P', children: 'p-4', key: 4},
+        //         { type: 'p', children: 'p-1', key: 1 },
+        //         { type: 'P', children: 'p-3', key: 3},
+        //     ]
+        // }
+
+        // render(oldVnode, document.querySelector('#app'))
+
+        // setTimeout(() => {
+        //     render(newVnode, document.querySelector('#app'))
+        // }, 1000)
+
+        
+        // 快速diff算法
         const { render } = createRenderer(BROWSER_RENDER_CONFIG)
 
         const oldVnode = {
@@ -219,6 +249,9 @@
                 { type: 'p', children: 'p-1', key: 1 },
                 { type: 'P', children: 'p-2', key: 2 },
                 { type: 'P', children: 'p-3', key: 3},
+                { type: 'P', children: 'p-4', key: 4},
+                { type: 'P', children: 'p-6', key: 6},
+                { type: 'P', children: 'p-5', key: 5},
          
             ]
         }
@@ -226,10 +259,12 @@
         const newVnode = {
             type: 'div',
             children:[
-                // { type: 'P', children: 'p-2', key: 2 },
-                // { type: 'P', children: 'p-4', key: 4},
                 { type: 'p', children: 'p-1', key: 1 },
                 { type: 'P', children: 'p-3', key: 3},
+                { type: 'P', children: 'p-4', key: 4},
+                { type: 'P', children: 'p-2', key: 2 },
+                { type: 'P', children: 'p-7', key: 7 },
+                { type: 'P', children: 'p-5', key: 5 },
             ]
         }
 

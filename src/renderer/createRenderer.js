@@ -342,8 +342,63 @@ function createRenderer(options) {
             while (j <= oldEnd) {
                 unmount(oldChildren[j++])
             } 
+        } else {
+            // 处理非理想情况
+            // 构造 source 数组
+            // 新的一组子节点中剩余未处理节点的数量
+            const count = newEnd - j + 1;
+            const source = new Array(count);
+            source.fill(-1);
+
+            // oldStart 和 newStart 分别为其实索引，即 j
+            const oldStart = j;
+            const newStart = j;
+            // 新增两个变量，moved 和 pos
+            let moved = false;
+            let pos = 0;
+
+            // 构建索引表
+            const keyIndex = {};
+            for (let i = newStart; i <= newEnd; i++) {
+                keyIndex[newChildren[i].key] = i;
+            }
+
+            // 新增patched 变量，代表更新过的节点数量
+            let patched = 0;
+            // 遍历旧的一组子节点中剩余未处理的节点
+            for (let i = oldStart; i <= oldEnd; i++) {
+                oldVNode = oldChildren[i];
+
+                // 如果更新过的节点数量小于等于需要更新的节点数量，则执行更新
+                if (patched <= count) {        
+                    // 通过索引表快速找到新的一组子节点中具有相同 key 值的节点位置
+                    const k = keyIndex[oldVNode.key];
+                    
+                    if (typeof k !== 'undefined') {
+                        newVNode = newChildren[k];
+                        
+                        // 调用 patch 函数完成更新
+                        patch(oldVNode, newVNode, container);
+                        // 填充source 数组
+                        source[k - newStart] = i;
+                        
+                        // 判断节点是都需要移动
+                        if(k < pos){
+                            moved = true;
+                        }else {
+                            pos = k;
+                        }
+                    } else {
+                        // 没找到
+                        unmount(oldVNode);
+                    }
+                } else {
+                    // 如果更新节过的节点数量大于需要更新的节点数量，则卸载多余的节点
+                    unmount(oldVNode);
+                }
+            }
         }
-   }
+    }
 
 
     /**

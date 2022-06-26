@@ -255,7 +255,10 @@ function createRenderer(options) {
                 // easyDiff(n1, n2, container);
 
                 // 双端diff 算法
-                doubleEndDiff(n1, n2, container);
+                // doubleEndDiff(n1, n2, container);
+
+                // 快速diff 算法
+                quickDiff(n1, n2, container)
             } else {
                 // 旧子节点要么是文本节点，要么不存在
                 // 无论那种情况，我们都只需要将容器清空，然后将新的一组子节点逐个卸载
@@ -397,8 +400,57 @@ function createRenderer(options) {
                     unmount(oldVNode);
                 }
             }
+            
+            if (moved) {
+                // 如果moved 为真，则需要进行DOM 移动操作
+                // 计算最长递增子序列
+                const seq = getSequence(source);
+
+                // s 指向最长递增子序列的最后一个元素
+                let s = seq.length - 1;
+                // i 指向新的一组子节点的最后一个元素
+                let i = count - 1;
+                for(i; i >= 0; i--){
+                    if (source[i] === -1) {
+                        // 说明索引为 i 的节点是全新的节点，应该将其挂载
+                        // 该节点在新 children 中的真实索引位置
+                        const pos = i + newStart;
+                        const newVNode = newChildren[pos];
+
+                        // 该节点的下一个节点的位置索引
+                        const nextPos = pos + 1;
+                        // 锚点
+                        const anchor = nextPos < newChildren.length
+                                        ? newChildren[nextPos].el
+                                        : null;
+
+                        patch(null, newVNode, container, anchor);
+                    } else if (i !== seq[s]) {
+                        // 如果节点的索引i不等于 seq[s]的值，说明该节点需要移动
+                        // 该节点在新 children 中的真实索引位置
+                        const pos = i + newStart;
+                        const newVNode = newChildren[pos];
+
+                        // 该节点的下一个节点的位置索引
+                        const nextPos = pos + 1;
+                        // 锚点
+                        const anchor = nextPos < newChildren.length
+                                        ? newChildren[nextPos].el
+                                        : null;
+
+                        // 移动
+                        insert(newVNode.el, container, anchor);
+                    } else {
+                        // 当 i === seq[s] 时，说明该位置的节点不需要移动
+                        // 只需要让s指向下一个位置 
+                        s--;
+                    }
+                }
+            }
         }
+
     }
+
 
 
     /**
@@ -711,3 +763,50 @@ function createRenderer(options) {
         hydrate
     }
 }
+
+
+/**
+* @desc 求给定序列的最长递增子序列的代码 
+* @author 张和潮
+* @date 2022年06月26日 22:29
+*/
+function getSequence(arr) {
+    const p = arr.slice()
+    const result = [0]
+    let i, j, u, v, c
+    const len = arr.length
+    for (i = 0; i < len; i++) {
+      const arrI = arr[i]
+      if (arrI !== 0) {
+        j = result[result.length - 1]
+        if (arr[j] < arrI) {
+          p[i] = j
+          result.push(i)
+          continue
+        }
+        u = 0
+        v = result.length - 1
+        while (u < v) {
+          c = (u + v) >> 1
+          if (arr[result[c]] < arrI) {
+            u = c + 1
+          } else {
+            v = c
+          }
+        }
+        if (arrI < arr[result[u]]) {
+          if (u > 0) {
+            p[i] = result[u - 1]
+          }
+          result[u] = i
+        }
+      }
+    }
+    u = result.length
+    v = result[u - 1]
+    while (u-- > 0) {
+      result[u] = v
+      v = p[v]
+    }
+    return result
+  }

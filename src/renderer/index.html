@@ -240,41 +240,51 @@
         // }, 1000)
 
         
-        // 快速diff算法
-        const { render } = createRenderer(BROWSER_RENDER_CONFIG)
+        // // 快速diff算法
+        // const { render } = createRenderer(BROWSER_RENDER_CONFIG)
 
-        const oldVnode = {
-            type: 'div',
-            children:[
-                { type: 'p', children: 'p-1', key: 1 },
-                { type: 'P', children: 'p-2', key: 2 },
-                { type: 'P', children: 'p-3', key: 3},
-                { type: 'P', children: 'p-4', key: 4},
-                { type: 'P', children: 'p-6', key: 6},
-                { type: 'P', children: 'p-5', key: 5},
+        // const oldVnode = {
+        //     type: 'div',
+        //     children:[
+        //         { type: 'p', children: 'p-1', key: 1 },
+        //         { type: 'P', children: 'p-2', key: 2 },
+        //         { type: 'P', children: 'p-3', key: 3},
+        //         { type: 'P', children: 'p-4', key: 4},
+        //         { type: 'P', children: 'p-6', key: 6},
+        //         { type: 'P', children: 'p-5', key: 5},
          
-            ]
-        }
+        //     ]
+        // }
 
-        const newVnode = {
-            type: 'div',
-            children:[
-                { type: 'p', children: 'p-1', key: 1 },
-                { type: 'P', children: 'p-3', key: 3},
-                { type: 'P', children: 'p-4', key: 4},
-                { type: 'P', children: 'p-2', key: 2 },
-                { type: 'P', children: 'p-7', key: 7 },
-                { type: 'P', children: 'p-5', key: 5 },
-            ]
-        }
+        // const newVnode = {
+        //     type: 'div',
+        //     children:[
+        //         { type: 'p', children: 'p-1', key: 1 },
+        //         { type: 'P', children: 'p-3', key: 3},
+        //         { type: 'P', children: 'p-4', key: 4},
+        //         { type: 'P', children: 'p-2', key: 2 },
+        //         { type: 'P', children: 'p-7', key: 7 },
+        //         { type: 'P', children: 'p-5', key: 5 },
+        //     ]
+        // }
 
-        render(oldVnode, document.querySelector('#app'))
+        // render(oldVnode, document.querySelector('#app'))
 
-        setTimeout(() => {
-            render(newVnode, document.querySelector('#app'))
-        }, 1000)
+        // setTimeout(() => {
+        //     render(newVnode, document.querySelector('#app'))
+        // }, 1000)
+
         
+        // 渲染组件
 
+        // 采用浏览器渲染配置创建渲染器
+       const { render } = createRenderer(BROWSER_RENDER_CONFIG)
+       
+       const compVnode = {
+            type: MyComponent
+        }
+        
+       render(compVnode, document.querySelector('#app'))
      
     </script>
 </body>

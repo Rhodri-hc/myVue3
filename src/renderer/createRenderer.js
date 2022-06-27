@@ -11,6 +11,19 @@ var Comment = Symbol();
 // Fragment 片段的 type 标识
 var Fragment = Symbol();
 
+// 定义一个组件
+const MyComponent = {
+    name: 'MyComponent',
+    // 组件渲染函数，其返回值必须为虚拟DOM
+    render(){
+        // 返回虚拟DOM
+        return {
+            type: 'div',
+            children: '我是文本节点'
+        }
+    }
+}
+
 // 浏览器渲染配置
 const BROWSER_RENDER_CONFIG = {
     // 用于创建元素
@@ -156,6 +169,25 @@ function createRenderer(options) {
         if (parent) {
             parent.removeChild(vNode.el)
         }
+    }
+
+    /**
+    * @desc 挂载节点
+    * @params { object } vnode 组件虚拟DOM
+    * @params { object } container 挂载节点
+    * @params { object } anchor 锚点
+    * @author 张和潮
+    * @date 2022年06月27日 23:28
+    */
+    function mountComponent(vnode, container, anchor){
+        // 通过vnode 获取组件的选项对象，即 vnode.type
+        const componentOptions = vnode.type;
+        // 获取组件中的渲染函数render
+        const { render } = componentOptions;
+        // 执行渲染函数你，获取组件要渲染的内容，即render 函数返回的虚拟DOM
+        const subTree = render();
+        // 挂载
+        patch(null, subTree, container, anchor);
     }
 
     /**
@@ -692,6 +724,13 @@ function createRenderer(options) {
             
         } else if (typeof type === "object"){
             // 如果n2.type 的值的类型是对象，则它描述的是组件
+            if (!n1) {
+                // 挂载组件
+                mountComponent(n2, container, anchor);
+            } else {
+                // 更新组件
+                patchComponent(n1, n2, anchor);
+            }
 
         } else if(type === Text){
             // 处理文本节点

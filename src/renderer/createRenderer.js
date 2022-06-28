@@ -27,6 +27,9 @@ const MyComponent = {
     created: function() {
       console.log(this.title);  
     },
+    setup: function(){
+        console.log('setup');
+    },
     // 组件渲染函数，其返回值必须为虚拟DOM
     render(){
         // 返回虚拟DOM
@@ -220,12 +223,15 @@ function createRenderer(options) {
         const componentOptions = vnode.type;
         // 获取组件中的渲染函数render
         // 从组件选项对象中取得组件的生命周期函数
-        const { render, data, props: propsOption, beforeCreate, created, beforeMount, mounted, beforeUpdate, updated} = componentOptions;
+        const { 
+            render, data, props: propsOption, setup,
+            beforeCreate, created, beforeMount, mounted, beforeUpdate, updated
+        } = componentOptions;
 
         beforeCreate && beforeCreate()
 
         // 调用data 函数得到原始数据，并调用reactive() 函数将其包装为响应式数据
-        const state = reactive(data());
+        const state = data ? reactive(data()) : null;
         // 调用 resolveProps 函数解析出最终的 props数据与 attrs 数据
         const [props, attrs] = resolveProps(propsOption, vnode.props);
 
@@ -241,6 +247,28 @@ function createRenderer(options) {
             subTree: null
         }
 
+        // setupContext, { emit, slots, attrs, expose} 
+        const setupContext = { attrs };
+        // 调用 setup 函数，将只读版本的 props 作为第一个参数传递，避免用户意外地修改props 的值
+        // 将setupContext 作为第二个参数传递
+        const setupResult = setup && setup(shallowReactive(instance.props, setupContext))
+        // setupState 用来存储由setup 返回的数据
+        let setupState = null;
+        // 如果 setup 函数的返回值是函数，则将其作为渲染函数
+        if (typeof setupResult === 'function') {
+            // 报告冲突
+            if (render) {
+                console.error('setup 函数返回渲染函数，render 选项将被忽略');
+            }
+
+            // 将 setupResult 作为渲染函数
+            render = setupResult;
+        } else {
+            // 如果 setup 的返回值不是函数，则作为数据状态赋值给 setupState
+            setupState = setupResult;
+        }
+
+
         // 将组件实例设置到 vnode 上，用于后续更新
         vnode.component = instance
 
@@ -255,6 +283,8 @@ function createRenderer(options) {
                 } else if (k in props){
                     // 如果组件自身没有该数据，则尝试从props 中读取
                     return props[k];
+                } else if (setupState && k in setupState) {
+                    return setupState[k];
                 } else {
                     console.error('不存在');
                 }
@@ -265,6 +295,8 @@ function createRenderer(options) {
                     state[k] = v;
                 } else if (k in props){
                     props[k] = v;
+                } else if (setupState && k in setupState) {
+                    setupState[k] = v;
                 } else {
                     console.error('不存在');
                 }

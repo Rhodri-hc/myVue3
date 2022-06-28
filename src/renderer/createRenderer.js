@@ -14,12 +14,18 @@ var Fragment = Symbol();
 // 定义一个组件
 const MyComponent = {
     name: 'MyComponent',
+    // 用data 函数来定义组件自身的状态
+    data() {
+        return {
+            foo: 'hello world'
+        }
+    },
     // 组件渲染函数，其返回值必须为虚拟DOM
     render(){
         // 返回虚拟DOM
         return {
             type: 'div',
-            children: '我是文本节点'
+            children: `foo 的值是：${this.foo}`
         }
     }
 }
@@ -183,11 +189,19 @@ function createRenderer(options) {
         // 通过vnode 获取组件的选项对象，即 vnode.type
         const componentOptions = vnode.type;
         // 获取组件中的渲染函数render
-        const { render } = componentOptions;
-        // 执行渲染函数你，获取组件要渲染的内容，即render 函数返回的虚拟DOM
-        const subTree = render();
-        // 挂载
-        patch(null, subTree, container, anchor);
+        const { render, data} = componentOptions;
+
+        // 调用data 函数得到原始数据，并调用reactive() 函数将其包装为响应式数据
+        const state = reactive(data())
+
+        effect(() => {
+            // 执行渲染函数你，获取组件要渲染的内容，即render 函数返回的虚拟DOM
+            const subTree = render.call(state, state);
+            // 挂载
+            patch(null, subTree, container, anchor);
+        }, {
+            scheduler: queueJob
+        })
     }
 
     /**

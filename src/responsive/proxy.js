@@ -34,6 +34,33 @@ function flushJob(){
     })
 
 }
+
+/**
+* @desc 任务缓存队列，用一个Set 数据结构来表示，这样就可以自动对任务进行去重
+* @author 张和潮
+* @date 2022年06月28日 12:00:50
+*/
+function queueJob(job) {
+    // 将job 添加到jobQueue 中
+    jobQueue.add(job);
+
+    // 如果还没有开始刷新队列，则刷新
+    if (!isFlushing) {
+        // 将改标志设置为true 以避免重复刷新
+        isFlushing = true;
+
+        // 在微任务中刷新缓冲队列
+        p.then(() => {
+            try{
+                jobQueue.forEach(job => job())
+            }finally {
+                // 结束后重置 isFlushing
+                isFlushing = false;
+                jobQueue.length = 0
+            }
+        })
+    }
+}
 /**  $nextTick 的类似实现   */
 
 /**

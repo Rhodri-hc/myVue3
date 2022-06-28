@@ -14,11 +14,18 @@ var Fragment = Symbol();
 // 定义一个组件
 const MyComponent = {
     name: 'MyComponent',
+    props: {
+        title: String,
+
+    },
     // 用data 函数来定义组件自身的状态
     data() {
         return {
             foo: 'hello world'
         }
+    },
+    created: function() {
+      console.log(this.title);  
     },
     // 组件渲染函数，其返回值必须为虚拟DOM
     render(){
@@ -139,6 +146,29 @@ function shouldSetAsProps(el, key, value) {
     return key in el
 }
 
+/**
+* @desc 用于解析组件 props 和 attrs 数据
+* @author 张和潮
+* @date 2022年06月28日 21:40
+*/
+function resolveProps(options, propsData){
+    const props = {};
+    const attrs = {};
+
+    // 遍历为组件传递的 props 数据
+    for (const key in propsData) {
+        if (key in options) {
+            // 如果为组件传递的props 数据在组件自身的 props 选项中有定义，则将其视为合法的props
+            props[key] = propsData[key];
+        } else {
+            // 否则将其作为 attrs
+            attrs[key] = propsData[key];
+        }
+    }
+
+    return [props, attrs];
+}
+
 
 /**
 * @desc 创建渲染器
@@ -190,17 +220,21 @@ function createRenderer(options) {
         const componentOptions = vnode.type;
         // 获取组件中的渲染函数render
         // 从组件选项对象中取得组件的生命周期函数
-        const { render, data, beforeCreate, created, beforeMount, mounted, beforeUpdate, updated} = componentOptions;
+        const { render, data, props: propsOption, beforeCreate, created, beforeMount, mounted, beforeUpdate, updated} = componentOptions;
 
         beforeCreate && beforeCreate()
 
         // 调用data 函数得到原始数据，并调用reactive() 函数将其包装为响应式数据
-        const state = reactive(data())
+        const state = reactive(data());
+        // 调用 resolveProps 函数解析出最终的 props数据与 attrs 数据
+        const [props, attrs] = resolveProps(propsOption, vnode.props);
 
         // 定义组件实例，一个组件实例本质上就是一个对象，他包含与组件有关的状态信息
         const instance = {
             // 组件自身的状态数据，即 data
             state,
+            // 将解析出的 props 数据包装为shalloReactive 并定义到组件实例上
+            props: shallowReactive(props),
             // 一个布尔值，用来表示组件是否已经被挂载，初始值为false 
             isMounted: false,
             // 组件所渲染的内容，即子树（subTree）
@@ -210,7 +244,35 @@ function createRenderer(options) {
         // 将组件实例设置到 vnode 上，用于后续更新
         vnode.component = instance
 
-        created && created();
+        // 创建渲染上下文对象，本质上市组件实例的代理
+        const renderContext = new Proxy(instance, {
+            get(t, k, r){
+                // 取得组件自身状态与 props数据
+                const {state, props} = t;
+                // 先尝试读取自身状态数据
+                if (state && k in state) {
+                    return state[k]
+                } else if (k in props){
+                    // 如果组件自身没有该数据，则尝试从props 中读取
+                    return props[k];
+                } else {
+                    console.error('不存在');
+                }
+            },
+            set(t, k, v, r){
+                const {state, props} = t;
+                if (state && k in state) {
+                    state[k] = v;
+                } else if (k in props){
+                    props[k] = v;
+                } else {
+                    console.error('不存在');
+                }
+            }
+        })
+
+        // 生命周期函数调用时要绑定渲染上下文对象
+        created && created.call(renderContext);
 
         effect(() => {
             // 执行渲染函数你，获取组件要渲染的内容，即render 函数返回的虚拟DOM

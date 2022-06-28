@@ -281,7 +281,10 @@
        const { render } = createRenderer(BROWSER_RENDER_CONFIG)
        
        const compVnode = {
-            type: MyComponent
+            type: MyComponent,
+            props:{
+                title: 'a big Title'
+            }
         }
         
        render(compVnode, document.querySelector('#app'))

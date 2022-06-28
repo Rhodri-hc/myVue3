@@ -189,16 +189,55 @@ function createRenderer(options) {
         // 通过vnode 获取组件的选项对象，即 vnode.type
         const componentOptions = vnode.type;
         // 获取组件中的渲染函数render
-        const { render, data} = componentOptions;
+        // 从组件选项对象中取得组件的生命周期函数
+        const { render, data, beforeCreate, created, beforeMount, mounted, beforeUpdate, updated} = componentOptions;
+
+        beforeCreate && beforeCreate()
 
         // 调用data 函数得到原始数据，并调用reactive() 函数将其包装为响应式数据
         const state = reactive(data())
 
+        // 定义组件实例，一个组件实例本质上就是一个对象，他包含与组件有关的状态信息
+        const instance = {
+            // 组件自身的状态数据，即 data
+            state,
+            // 一个布尔值，用来表示组件是否已经被挂载，初始值为false 
+            isMounted: false,
+            // 组件所渲染的内容，即子树（subTree）
+            subTree: null
+        }
+
+        // 将组件实例设置到 vnode 上，用于后续更新
+        vnode.component = instance
+
+        created && created();
+
         effect(() => {
             // 执行渲染函数你，获取组件要渲染的内容，即render 函数返回的虚拟DOM
             const subTree = render.call(state, state);
-            // 挂载
-            patch(null, subTree, container, anchor);
+            // 检查组件是否已经被挂载
+            if (!instance.isMounted) {
+                beforeMount && beforeMount();
+
+                // 初次挂载
+                patch(null, subTree, container, anchor);
+
+                mounted && mounted();
+
+                // 将组件实例的 isMounted 设置为true，这样但更新发生时，就不会再次进行挂载操作，
+                // 而是会执行更新
+                instance.isMounted = true;
+            } else {
+                beforeUpdate && beforeUpdate()
+                // 当 isMounted为true 时，说明组件已经被挂载，只需要完成自更新即可，
+                // 所以在调用patch 函数时，第一个参数为组件上一次渲染的子树。
+                // 意思是，使用新的子树与上一次渲染的子树进行打补丁操作
+                // 挂载
+                patch(instance.subTree, subTree, container, anchor);
+                updated && updated()
+            }
+            // 更新组件实例的子树
+            instance.subTree = subTree;
         }, {
             scheduler: queueJob
         })

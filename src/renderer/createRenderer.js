@@ -215,6 +215,28 @@ function resolveProps(options, propsData){
 
     return [props, attrs];
 }
+/**
+* @desc 判断props 是否发生改变
+* @author 张和潮
+* @date 2022年06月29日 23:35
+*/
+function hasPropsChange(prevProps, nextProps){
+    const nextKeys = Object.keys(nextProps);
+    // 如果新旧 props 的数量变了，则说明有变化
+    if (nextKey.length !== Object.keys(prevProps).length) {
+        return true;
+    }
+
+    for (let i = 0; i < nextKey.length; i++) {
+        const key = nextKey[i];
+        
+        if (nextProps[key] !== prevProps[key]) {
+            return true;
+        }
+    }
+
+    return false
+}
 
 
 /**
@@ -255,7 +277,7 @@ function createRenderer(options) {
     }
 
     /**
-    * @desc 挂载节点
+    * @desc 挂载组件
     * @params { object } vnode 组件虚拟DOM
     * @params { object } container 挂载节点
     * @params { object } anchor 锚点
@@ -415,6 +437,37 @@ function createRenderer(options) {
         }, {
             scheduler: queueJob
         })
+    }
+
+    /**
+    * @desc 更新组件
+    * @params { object } n1 旧节点
+    * @params { object } n2 新节点
+    * @params { object } anchor 锚点
+    * @author 张和潮
+    * @date 2022年06月27日 23:28
+    */
+    function patchComponent(n1, n2, anchor){
+        // 获取组件实例
+        const instace = (n2.component = n1.component);
+        // 获取当前的 props 数据
+        const { props } = instance;
+        // 调用 hasPropsChange 检测子组件传递的 props 是否发生变化，如果没有变化，则不需要更新
+        if (hasPropsChange(n1.props, n2.props)) {
+            // 调用resolveProps 函数重新获取props 数据
+            const [nextProps] = resolveProps(n2.type.props, n2.props);
+            // 更新props 
+            for( const k in nextProps) {
+                props[k] = nextProps[k];
+            }
+
+            // 删除不存在的 props 
+            for(const k in props){
+                if (!(k in nextProps)) {
+                    delete props[k]
+                }
+            }
+        }
     }
 
     /**

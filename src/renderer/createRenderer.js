@@ -11,6 +11,27 @@ var Comment = Symbol();
 // Fragment 片段的 type 标识
 var Fragment = Symbol();
 
+// 定义全局变量，存储当前正在被初始化的组件实例
+let currentInstance = null;
+// 该方法接收组件实例作为参数，并将该实例设置为 currentInstance
+function setCurrentInstance(instance){
+    currentInstance = instance;
+}
+
+/**
+* @desc 挂载函数
+* @author 张和潮
+* @date 2022年06月29日 23:08
+*/
+function onMounted(fn) {
+    if (currentInstance) {
+        // 将生命周期函数添加到 instance.mounted 数组
+        currentInstance.mounted.push(fn);
+    } else {
+        console.error('onMounted 函数只能在 setup 中调用');
+    }
+}
+
 // 定义一个组件
 const MyComponent = {
     name: 'MyComponent',
@@ -39,26 +60,28 @@ const MyComponent = {
     render(){
       
         // 返回虚拟DOM
-        return [
-            {
-                type: 'header',
-                children: [this.$slots.header()]
-            },
-            {
-                type: 'div',
-                children: [this.$slots.body()]
-            },
-            {
-                type: 'footer',
-                children: [this.$slots.footer()]
-            },
-        ]
-        // {
-        //     // type: 'div',
-        //     // children: `foo 的值是：${this.foo}`
-        // }
+        // return [
+        //     {
+        //         type: 'header',
+        //         children: [this.$slots.header()]
+        //     },
+        //     {
+        //         type: 'div',
+        //         children: [this.$slots.body()]
+        //     },
+        //     {
+        //         type: 'footer',
+        //         children: [this.$slots.footer()]
+        //     },
+        // ]
+        return {
+            type: 'div',
+            children: `foo 的值是：${this.foo}`
+        }
     }
 }
+
+
 
 // 浏览器渲染配置
 const BROWSER_RENDER_CONFIG = {
@@ -272,6 +295,8 @@ function createRenderer(options) {
             subTree: null,
             // 插槽
             slots,
+            // 在组件实例中添加mounted 数组，用来存储通过onMounted 函数注册的生命周期钩子函数
+            mounted:[]
         }
 
         // 定义 emit 函数，它接收两个参数
@@ -297,7 +322,11 @@ function createRenderer(options) {
         const setupContext = { attrs, emit, slots };
         // 调用 setup 函数，将只读版本的 props 作为第一个参数传递，避免用户意外地修改props 的值
         // 将setupContext 作为第二个参数传递
+        // 调用 setup 之前，设置当前组件实例
+        setCurrentInstance(instance);
         const setupResult = setup(shallowReactive(instance.props), setupContext)
+        // 在setup函数执行完毕之后，重置当前组件实例
+        setCurrentInstance(null);
         // setupState 用来存储由setup 返回的数据
         let setupState = null;
         // 如果 setup 函数的返回值是函数，则将其作为渲染函数
@@ -367,7 +396,7 @@ function createRenderer(options) {
                 // 初次挂载
                 patch(null, subTree, container, anchor);
 
-                mounted && mounted();
+                instance.mounted && instance.mounted.forEach(hook => hook.call(renderContext));
 
                 // 将组件实例的 isMounted 设置为true，这样但更新发生时，就不会再次进行挂载操作，
                 // 而是会执行更新

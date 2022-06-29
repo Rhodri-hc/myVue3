@@ -283,11 +283,16 @@
        const compVnode = {
             type: MyComponent,
             props:{
-                title: 'a big Title'
+                title: 'a big Title',
+                onChange: function(...params) {
+                            console.log('我是setup触发函数', params);
+                        }
             }
         }
         
        render(compVnode, document.querySelector('#app'))
+
+       
      
     </script>
 </body>

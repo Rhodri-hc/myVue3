@@ -37,11 +37,26 @@ const MyComponent = {
     },
     // 组件渲染函数，其返回值必须为虚拟DOM
     render(){
+      
         // 返回虚拟DOM
-        return {
-            type: 'div',
-            children: `foo 的值是：${this.foo}`
-        }
+        return [
+            {
+                type: 'header',
+                children: [this.$slots.header()]
+            },
+            {
+                type: 'div',
+                children: [this.$slots.body()]
+            },
+            {
+                type: 'footer',
+                children: [this.$slots.footer()]
+            },
+        ]
+        // {
+        //     // type: 'div',
+        //     // children: `foo 的值是：${this.foo}`
+        // }
     }
 }
 
@@ -241,6 +256,10 @@ function createRenderer(options) {
         // 调用 resolveProps 函数解析出最终的 props数据与 attrs 数据
         const [props, attrs] = resolveProps(propsOption, vnode.props);
 
+        
+        // 直接使用编译好的 vnode.children 对象作为slots 对象即可
+        const slots = vnode.children || {}
+
         // 定义组件实例，一个组件实例本质上就是一个对象，他包含与组件有关的状态信息
         const instance = {
             // 组件自身的状态数据，即 data
@@ -250,7 +269,9 @@ function createRenderer(options) {
             // 一个布尔值，用来表示组件是否已经被挂载，初始值为false 
             isMounted: false,
             // 组件所渲染的内容，即子树（subTree）
-            subTree: null
+            subTree: null,
+            // 插槽
+            slots,
         }
 
         // 定义 emit 函数，它接收两个参数
@@ -269,8 +290,11 @@ function createRenderer(options) {
             }
         }
 
+        
+
+
         // setupContext, { emit, slots, attrs, expose} 
-        const setupContext = { attrs, emit };
+        const setupContext = { attrs, emit, slots };
         // 调用 setup 函数，将只读版本的 props 作为第一个参数传递，避免用户意外地修改props 的值
         // 将setupContext 作为第二个参数传递
         const setupResult = setup(shallowReactive(instance.props), setupContext)
@@ -298,7 +322,12 @@ function createRenderer(options) {
         const renderContext = new Proxy(instance, {
             get(t, k, r){
                 // 取得组件自身状态与 props数据
-                const {state, props} = t;
+                const {state, props, slots} = t;
+              
+                if (k === '$slots') {
+                    return slots;
+                }
+
                 // 先尝试读取自身状态数据
                 if (state && k in state) {
                     return state[k]
@@ -330,7 +359,7 @@ function createRenderer(options) {
 
         effect(() => {
             // 执行渲染函数你，获取组件要渲染的内容，即render 函数返回的虚拟DOM
-            const subTree = render.call(state, state);
+            const subTree = render.call(renderContext, state);
             // 检查组件是否已经被挂载
             if (!instance.isMounted) {
                 beforeMount && beforeMount();

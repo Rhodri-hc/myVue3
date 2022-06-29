@@ -287,6 +287,17 @@
                 onChange: function(...params) {
                             console.log('我是setup触发函数', params);
                         }
+            },
+            children:{
+                header(){
+                    return { type: 'h1', children: '我是标题' }
+                },
+                body(){
+                    return { type: 'section', children: "我是内容" }
+                },
+                footer(){
+                    return { type: 'p', children: "我是注脚" }
+                }
             }
         }
         

@@ -37,6 +37,19 @@ function defineAsyncComponent(options){
             // const timeout = ref(false);
             // 定义 error ，当错误发生时，用来存储错误对象
             const error = shallowRef(null);
+            // 代表是否正在加载，默认为false
+            const loading = ref(false);
+
+            let loadingTimer = null;
+            // 如果配置项中存在delay，则开启一个定时器计时，
+            if (options.delay) {
+                loadingTimer = setTimeout(() => {
+                    loading.value = true;
+                }, options.delay)
+            } else {
+                // 如果配置项中没有delay ，则直接标记为加载中
+                loading.value = true;
+            }
 
             // 执行加载器函数，返回一个 Promise 实例
             // 加载成功后，将加载成功的组件赋值给InnerComp，并将loaded 标记为true，
@@ -44,8 +57,14 @@ function defineAsyncComponent(options){
             loader().then(c => {
                 InnerComp = c;
                 loaded.value = true;
-            }).catch((err) => {
+            })
+            .catch((err) => {
                 error.value = err;
+            })
+            .finally(() => {
+                loading.value = false;
+                // 加载完毕后，无论成功与否都要清除延迟定时器
+                clearTimeout(loadingTimer);
             })
 
             let timer = null;
@@ -74,7 +93,10 @@ function defineAsyncComponent(options){
                 } else if(error.value  && options.errorComponent){
                     // 如果加载超时，或者加载错误，并且用户指定了Error 组件，则渲染该组件
                     return { type: options.errorComponent, props: { error: error.value } }
-                } 
+                } else if(loading.value && options.loadingComponent){
+                    // 如果异步组件正在加载，并且用户指定了 Loading 组件，则渲染 Loading 组件
+                    return { type: options.loadingComponent }
+                }
 
                 return placeholder;
             //     // 如果异步组件加载组件，则渲染改组件，否则渲染一个占位内容

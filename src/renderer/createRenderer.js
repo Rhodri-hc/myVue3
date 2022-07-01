@@ -265,9 +265,16 @@ function createRenderer(options) {
         if (vNode.type === Fragment) {
             vNode.children.forEach(c => unmount(c));
             return;
-        } else if(typeof vnode.type === 'object'){
-            // 对于组件的卸载，本质上市要卸载组件所渲染的内容，即 subTree
-            unmount(vnode.component.subTree);
+        } else if(typeof vNode.type === 'object'){
+            // vNode.shouldKeepAlive 是一个布尔值，用来表示该组件是否应该被 KeepAlive
+            if (vNode.shouldKeepAlive) {
+                // 对于需要被 KeepAlive 的组件，应调用该组件的父组件，
+                // 即 KeepAlive 组件的 _deActivate 函数使其失活
+                vNode.keepAliveInstance._deActivate(vNode)
+            } else{
+                // 对于组件的卸载，本质上市要卸载组件所渲染的内容，即 subTree
+                unmount(vNode.component.subTree);
+            }
             return;
         }
 
@@ -334,7 +341,23 @@ function createRenderer(options) {
             // 插槽
             slots,
             // 在组件实例中添加mounted 数组，用来存储通过onMounted 函数注册的生命周期钩子函数
-            mounted:[]
+            mounted:[],
+            // 只有 KeepAlive 组件的实例下会有 keepAliveCtx 对象
+            keepAliveCtx: null
+        }
+
+        // 检查当前要挂载组件是否是 KeepAlive 组件
+        const isKeepAlive = vnode.type.__isKeepAlive
+        if (isKeepAlive) {
+            // 在 KeepAlive 组件实例上添加 keepAliveCtx 对象
+            instance.keepAliveCtx = {
+                // move
+                move(vnode, container, anchor){
+                    // 本质上是将组件渲染的内容移动到指定容器中，即隐藏容器中
+                    insert(vnode.component.subTree.el, container, anchor)
+                },
+                createElement
+            }
         }
 
         // 定义 emit 函数，它接收两个参数
@@ -1024,8 +1047,13 @@ function createRenderer(options) {
         else if (typeof type === "object" || typeof type === 'function'){
             // 如果n2.type 的值的类型是对象，则它描述的是组件
             if (!n1) {
-                // 挂载组件
-                mountComponent(n2, container, anchor);
+                // 如果该组件已经被KeepAlive，则不会重新挂载它，而是会调用 _activate 来激活
+                if (n2.keptAlive) {
+                    n2.keepAliveInstance._activate(n2, container, anchor)
+                } else{
+                    // 挂载组件
+                    mountComponent(n2, container, anchor);
+                }
             } else {
                 // 更新组件
                 patchComponent(n1, n2, anchor);

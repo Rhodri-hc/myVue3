@@ -1042,6 +1042,19 @@ function createRenderer(options) {
             }
             
         } 
+        else if ( typeof type === 'object' && type.__isTeleport ) {
+            // 组件选项中如果存在__isTeleport，则它是 Teleport 组件，
+            // 调用Teleport 组件选项中的 process 函数将控制权交接出去
+            // 传递给 process 函数的第五个参数是渲染器的一些内部方法
+            type.process(n1, n2, container, anchor, {
+                patch,
+                patchChildren,
+                unmount,
+                move(vnode, container, anchor){
+                    insert(vnode.component ? vnode.component.subTree.el : vnode.el, container, anchor)
+                }
+            })
+        }
         // type 是对象 --> 有状态组件
         // type 是函数 --> 函数式组件
         else if (typeof type === "object" || typeof type === 'function'){

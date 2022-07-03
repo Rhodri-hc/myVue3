@@ -283,7 +283,18 @@ function createRenderer(options) {
         const parent = vNode.el.parentNode
         // 调用 removeChild 移除元素
         if (parent) {
-            parent.removeChild(vNode.el)
+            // 将卸载动作封装到 performRemove 函数中
+           const performRemove = () => parent.removeChild(vNode.el);
+
+           // 判断 vNode 是否需要过渡效果
+           const needTransition = vNode.transition
+           if (needTransition) {
+             // 如果需要过渡处理，则调用 transition.leave 钩子
+             // 同时将DOM 元素和 preformRemove 函数作为参数传递
+             vNode.transition.leave(vNode.el, performRemove)
+           } else {
+             performRemove()
+           }
         }
     }
 
@@ -543,8 +554,20 @@ function createRenderer(options) {
             }
         }
 
+        // 判断一个VNode 是否需要过渡
+        const needTransition = vNode.transition;
+        if (needTransition) {
+            // 调用 transition.beforeEnter 钩子，并将DOM 元素作为参数传递
+            vNode.transition.beforeEnter(el)
+        }
+
         // 调用 insert 函数将元素插入到容器内
         insert(el, container, anchor);
+
+        if (needTransition) {
+            // 调用 transition.enter 钩子，并将DOM 元素作为参数传递
+            vNode.transition.enter(el)
+        }
     }
 
     /**

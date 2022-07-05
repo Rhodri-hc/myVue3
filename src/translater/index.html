@@ -11,9 +11,9 @@
 
     <script src="./parser.js"></script>
     <script>
-        const tokens = tokenzie('<p>Vue</p>');
+        const AST = parse('<div><p>Vue</p><p>Template</p></div>');
 
-        console.log(tokens);
+        console.log(AST);
     </script>
 </body>
 </html>

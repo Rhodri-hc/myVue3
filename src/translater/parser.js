@@ -126,7 +126,7 @@ function tokenzie(str) {
                     //    注意，此时 chars 数组中缓存的字符就是文本内容
                     tokens.push({
                         type: 'text',
-                        name: chars.join('')
+                        content: chars.join('')
                     })
                     // 3. chars 数组的内容已经被消费，清空它
                     chars.length = 0;
@@ -181,3 +181,70 @@ function tokenzie(str) {
     return tokens;
 }
 
+
+/**
+* @desc parser 函数接收模板作为参数，解析为模板AST
+* @author 张和潮
+* @date 2022年07月05日 21:05
+*/
+function parse(str) {
+    // 首先对模板进行标记化，得到toekns
+    const tokens = tokenzie(str);
+
+    // 创建 Root根节点
+    const root = {
+        type: 'Root',
+        children: []
+    }
+
+    // 创建elementStack 栈，起初只有Root 根节点
+    const elementStack = [root];
+
+    // 循环扫描tokens 
+    while(tokens.length){
+        // 获取当前站定节点作为父节点parent
+        const parent = elementStack[elementStack.length - 1];
+
+        // 获取当前token
+        const t = tokens[0];
+
+        switch (t.type) {
+            case 'tag':
+                // 开始标签，创建 Element 类型的AST 节点
+                const elementNode = {
+                    type: 'Element',
+                    tag: t.name,
+                    children: []
+                }
+                // 将其添加到父级节点的children 中
+                parent.children.push(elementNode);
+                // 将当前节点压入栈
+                elementStack.push(elementNode);
+                
+                break;
+    
+            case 'text':
+                // 文本，创建 Text 类型的AST 节点
+                const textNode = {
+                    type: 'Text',
+                    content: t.content,
+                    
+                }
+                // 将其添加到父级节点的children 中
+                parent.children.push(textNode);
+                
+                break;
+
+            case 'tagEnd':
+                // 遇到结束标签，将栈顶节点弹出
+                elementStack.pop()
+                
+                break;   
+        }
+
+        tokens.shift()
+    }
+
+    // 返回AST
+    return root;
+}

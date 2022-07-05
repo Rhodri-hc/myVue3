@@ -38,21 +38,29 @@ function dump(node, indent = 0) {
 */
 function traverseNode(ast, context) {
     // 当前节点，ast 本身就是 Root 节点
-    const currentNode = ast;
+    context.currentNode  = ast;
 
     
     // context.nodeTransforms 数组
     const transforms = context.nodeTransforms;
     for (let i = 0; i < transforms.length; i++) {
         // 将当前节点 currentNode 和 context 都传递给nodeTransforms 中注册的回调函数
-        const element = transforms[i](currentNode, context);
+        const element = transforms[i](context.currentNode, context);
         
+        // 检查当前节点是否已经被移除，被移除直接返回
+        if (!context.currentNode) {
+            return;
+        }
     }
 
     // 如果有子节点，则递归调用 traverseNode 函数进行遍历
-    const children = currentNode.children;
+    const children = context.currentNode.children;
     if (children) {
         for (let i = 0; i < children.length; i++) {
+            // 递归调用 traverseNode 转换子节点之前，将当前节点设置为父节点
+            context.parent = context.currentNode
+            // 设置位置索引
+            context.childIndex = i;
             traverseNode(children[i], context);
             
         }
@@ -67,13 +75,33 @@ function traverseNode(ast, context) {
 function transform(ast) {
     // 创建context 对象
     const context = {
+        // 存储当前正在转换的节点
+        currentNode: null,
+        // 存储当前节点在父节点的 children 中的位置索引
+        childIndex: 0,
+        // 存储当前转换节点的父节点
+        parent: null,
         // 注册nodeTransforms 数组
         nodeTransforms: [
             // 转换标签节点
             transformElement,
             // 转换文本节点
             transformText
-        ]
+        ],
+        // 用来替换节点
+        replaceNode(node){
+            context.parent.children[context.childIndex] = node;
+
+            context.currentNode = node;
+        },
+        // 删除当前节点
+        removeNode(){
+            if (context.parent) {
+                context.parent.children.splice(context.childIndex, 1)
+
+                context.currentNode = null;
+            }
+        }
     }
 
     // 完成转换
@@ -98,8 +126,8 @@ function transformElement(node) {
 * @author 张和潮
 * @date 2022年07月05日 22:42
 */
-function transformText(node) {
+function transformText(node, context) {
     if (node.type === 'Text') {
-        node.content = node.content.repeat(2)
+        context.removeNode()
     }
 }

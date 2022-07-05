@@ -10,10 +10,11 @@
     <div id="text"></div>
 
     <script src="./parser.js"></script>
+    <script src="./transformer.js"></script>
     <script>
         const AST = parse('<div><p>Vue</p><p>Template</p></div>');
 
-        console.log(AST);
+        transform(AST);
     </script>
 </body>
 </html>

@@ -40,12 +40,20 @@ function traverseNode(ast, context) {
     // 当前节点，ast 本身就是 Root 节点
     context.currentNode  = ast;
 
+    // 增加退出阶段的回调函数数据
+    const exitFns = [];
     
     // context.nodeTransforms 数组
     const transforms = context.nodeTransforms;
     for (let i = 0; i < transforms.length; i++) {
         // 将当前节点 currentNode 和 context 都传递给nodeTransforms 中注册的回调函数
-        const element = transforms[i](context.currentNode, context);
+        // 转换函数可以返回另一个函数，该函数即作为退出阶段的回调函数
+        const onExit = transforms[i](context.currentNode, context);
+
+        if (onExit) {
+            // 将退出阶段的回调函数添加到 exitFns 数组中
+            exitFns.push(onExit)
+        }
         
         // 检查当前节点是否已经被移除，被移除直接返回
         if (!context.currentNode) {
@@ -64,6 +72,12 @@ function traverseNode(ast, context) {
             traverseNode(children[i], context);
             
         }
+    }
+
+    // 在节点处理的最后阶段执行缓存到exitFns 中的回调函数
+    let i = exitFns.length
+    while(i--){
+        exitFns[i]()
     }
 }
 

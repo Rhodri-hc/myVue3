@@ -11,12 +11,15 @@
 
     <script src="./parser.js"></script>
     <script src="./transformer.js"></script>
+    <script src="./generater.js"></script>
     <script>
         const AST = parse('<div><p>Vue</p><p>Template</p></div>');
 
         transform(AST);
 
-        console.log(AST.jsNode);
+        const code = generate(AST.jsNode)
+
+        console.log(code);
     </script>
 </body>
 </html>

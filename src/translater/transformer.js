@@ -124,7 +124,7 @@ function transform(ast) {
     traverseNode(ast, context)
 
     // 打印ast 信息
-    console.log(dump(ast));
+    // console.log(dump(ast));
 }
 
 /**

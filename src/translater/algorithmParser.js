@@ -40,6 +40,30 @@ function algoParse(str) {
 }
 
 /**
+* @desc 结束循环
+* @author 张和潮
+* @date 2022年07月08日 22:55
+*/
+function isEnd(context, ancestors) {
+    // 当模板内容解析完毕后，停止
+    if (!context.source) {
+        return true;
+    }
+
+    // 获取父级节点栈内所有节点做比较
+    for (let i = ancestors.length - 1; i >= 0; --i) {
+        // 如果遇到结束标签，并且该标签与父级标签节点同名，则停止
+        if (context.source.startsWith(`</${ancestors[i].tag}`)) {
+            return true
+        }
+        
+    }
+    
+    
+
+}
+
+/**
 * @desc 解析函数
 * @author 张和潮
 * @date 2022年07月08日 21:56
@@ -67,6 +91,9 @@ function parseChildren(context, ancestors){
 
                 } else if (source[1] === '/') {
                     // 结束标签
+                    // 状态机遭遇了闭合标签，此时应该抛出错误，因为他缺少与之对应的开始标签
+                    console.error('无效的结束标签');
+                    continue;
                 } else if (/[a-z]/i.test(source[1])){
                     // 标签
                     node = parseElement(context, ancestors)
@@ -103,11 +130,25 @@ function parseElement(context, ancestors) {
     // 解析开始标签
     const element = parseTag(context, ancestors);
 
+    if (element.isSelfClosing) {
+        return element;
+    }
+
+    ancestors.push(element)
+
     // 递归调用parseChildren 函数进行 <div> 标签子节点的解析
     element.children = parseChildren(context, ancestors)
 
-    // 解析结束标签
-    parseEndTag(context, ancestors)
+    ancestors.pop()
+
+    if (context.source.startsWith(`</${element.tag}`)) {
+        // 解析结束标签
+        parseTag(context, 'end')
+    }else {
+        // 缺少闭合标签
+        console.error(`${element.tag} 标签缺少闭合标签`);
+    }
+
 
     return element;
 }

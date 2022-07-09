@@ -10,16 +10,17 @@
     <div id="text"></div>
 
     <script src="./parser.js"></script>
+    <script src="./algorithmParser.js"></script>
     <script src="./transformer.js"></script>
     <script src="./generater.js"></script>
     <script>
-        const AST = parse('<div><p>Vue</p><p>Template</p></div>');
+        const AST = algoParse('<div><p>Vue</p><p>Template</p></div>');
 
-        transform(AST);
+        // transform(AST);
 
-        const code = generate(AST.jsNode)
+        // const code = generate(AST.jsNode)
 
-        console.log(code);
+        console.log(AST);
     </script>
 </body>
 </html>

@@ -22,7 +22,22 @@ function algoParse(str) {
         // source 是模板内容，用于在解析过程中进行消费
         source: str,
         // 解析器当前处于文本模式，初始模式为DATA
-        mode: TextModes.DATA
+        mode: TextModes.DATA,
+        // advanceBy 函数用来消费置顶数量的字符，他接收一个数字作为参数
+        advanceBy(num){
+            // 根据给定字符数num，截取位置 num 后的模板内容，并替换当前模板内容
+            context.source = context.source.slice(num)
+        },
+        // 无论开始标签还是结束标签，都有可能存在无用的空白字符。例如<div     >
+        advanceSpaces(){
+            // 匹配空白字符
+            const match = /^[\t\r\n\f ]+/.exec(context.source)
+            if (match) {
+                // 调用 advanceBy 函数消费空白字符
+                context.advanceBy(match[0].length)
+            }
+        }
+
     }
 
     // 调用 parseChildren 函数开始进行解析，它返回解析后得到的子节点
@@ -58,9 +73,6 @@ function isEnd(context, ancestors) {
         }
         
     }
-    
-    
-
 }
 
 /**
@@ -128,10 +140,22 @@ function parseChildren(context, ancestors){
 */
 function parseElement(context, ancestors) {
     // 解析开始标签
-    const element = parseTag(context, ancestors);
+    const element = parseTag(context);
 
     if (element.isSelfClosing) {
         return element;
+    }
+
+    // 切换到正确的文本模式
+    if (element.tag === 'textarea' || element.tag === 'title') {
+        // 如果标签是<textarea> 或者 <title> 则切换到RCDATA 模式
+        context.mode = TextModes.RCDATA
+    } else if (/style|xmp|iframe|noembed|noframes|noscript/.test(element.tag)) {
+        // 如果是 <style> <xmp> <iframe> <noembed> <noframes> <noscript>
+        // 则切换到 RAWTEXT 模式
+        context.mode = TextModes.RAWTEXT
+    } else {
+        context.mode = TextModes.DATA
     }
 
     ancestors.push(element)
@@ -151,4 +175,48 @@ function parseElement(context, ancestors) {
 
 
     return element;
+}
+
+
+/**
+* @desc 解析标签
+* @author 张和潮
+* @date 2022年07月09日 14:08:33
+*/
+function parseTag(context, type = 'start') {
+    // 从上下文对象中拿到 advanceBy 函数
+    const { advanceBy, advanceSpaces } = context
+
+    // 处理开始标签和结束标签的正则表达式不同
+    const match = type === 'start'
+        // 匹配开始标签
+        ? /^<([a-z][^\t\r\n\f />]*)/i.exec(context.source)
+        // 匹配结束标签
+        : /^<\/([a-z][^\t\r\n\f />]*)/i.exec(context.source)
+
+    // 匹配成功后，正则表达式的第一个捕获择的值就是标签名称
+    const tag = match[1]
+    // 消费正则表达式匹配的全部内容，例如 '<div' 这段内容
+    advanceBy(match[0].length);
+    // 消费标签中无用的空白字符
+    advanceSpaces();
+
+    // 在消费匹配的内容后，如果字符串以 '/>' 开头，这说明这是一个自闭合标签
+    const isSelfClosing = context.source.startsWith('/>')
+
+    // 如果是自闭合标签，则消费 '/>' 否则消费 '>'
+    advanceBy(isSelfClosing ? 2 : 1)
+
+    // 返回标签节点
+    return {
+        type: 'Element',
+        // 标签名称
+        tag,
+        // 标签的属性
+        props:[],
+        // 子节点留空
+        children:[],
+        // 是否自闭合
+        isSelfClosing
+    }
 }

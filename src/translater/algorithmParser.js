@@ -337,3 +337,34 @@ function parseText(context) {
         content
     }
 }
+
+/**
+* @desc 解析插值
+* @author 张和潮
+* @date 2022年07月10日 18:52
+*/
+function parseInterpolation(context) {
+    // 消费开始定界符
+    context.advanceBy('{{'.length);
+    // 找到结束定界符的位置索引
+    closeIndex = context.source.indexOf('}}');
+    if(closeIndex < 0){
+        console.error('插值缺少结束定界符');
+    }
+
+    // 截取开始定界符与结束定界符之间的内容作为插值表达式
+    const content = context.source.slice(0, closeIndex);
+
+    context.advanceBy(content.length);
+    context.advanceBy('}}'.length);
+
+    return {
+        type: 'Interpolation',
+        // 插值节点的 content 是一个类型为 Expression 的表达式节点
+        content: {
+            type: 'Expression',
+            content
+        }
+    }
+}
+

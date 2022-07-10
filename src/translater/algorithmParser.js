@@ -368,3 +368,27 @@ function parseInterpolation(context) {
     }
 }
 
+/**
+* @desc 解析注释
+* @author 张和潮
+* @date 2022年07月10日 19:06
+*/
+function parseComment(context){
+    // 消费注释开始部分
+    context.advanceBy('<!--'.length);
+    // 找到注释结束部分的位置索引
+    closeIndex = context.source.indexOf('-->');
+    
+
+    // 截取注释内容
+    const content = context.source.slice(0, closeIndex);
+
+    context.advanceBy(content.length);
+    context.advanceBy('-->'.length);
+
+    return {
+        type: 'Comment',
+        content
+    }
+
+}

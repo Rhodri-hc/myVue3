@@ -201,6 +201,10 @@ function parseTag(context, type = 'start') {
     // 消费标签中无用的空白字符
     advanceSpaces();
 
+    // 调用 parseAttributes 函数完成属性与指令的解析，并得到 props 数组
+    // props 数组是由指令节点与属性节点共同组成的数组
+    const props = parseAttributes(context);
+
     // 在消费匹配的内容后，如果字符串以 '/>' 开头，这说明这是一个自闭合标签
     const isSelfClosing = context.source.startsWith('/>')
 
@@ -213,10 +217,86 @@ function parseTag(context, type = 'start') {
         // 标签名称
         tag,
         // 标签的属性
-        props:[],
+        props,
         // 子节点留空
         children:[],
         // 是否自闭合
         isSelfClosing
     }
+}
+
+
+/**
+* @desc 解析属性
+* @author 张和潮
+* @date 2022年07月10日 16:12
+*/
+function parseAttributes(context){
+    const { advanceBy, advanceSpaces } = context;
+    // 用来存储解析过程中产生的属性节点和指令节点
+    const props = [];
+
+    // 开启 while 循环，不断地消费模板内容，直至遇到标签的 “结束部分” 为止
+    while ( 
+        !context.source.startsWith('>') 
+        && !context.source.startsWith('/>')
+    ) {
+        // 正则匹配属性名称
+        const match = /^[^\t\r\n\f />][^\t\r\n\f />=]*/.exec(context.source);
+        // 属性名称
+        const name = match[0];
+        // 消费属性名称
+        advanceBy(name.length);
+        // 消费属性名称与等于号之间的空白字符
+        advanceSpaces();
+        // 消费等于号
+        advanceBy(1);
+        // 消费等于号与属性值之间的空白字符
+        advanceSpaces();
+
+        // 属性值
+        let value = '';
+
+        // 获取当前模板内容的第一字符
+        const quote = context.source[0];
+        // 判断属性值是否被引号引用
+        const isQuoted = quote === '"' || quote === "'";
+        
+        if(isQuoted){
+            // 属性值被引号引用，消费引号
+            advanceBy(1);
+            // 获取下一个引号的索引
+            const endQuoteIndex = context.source.indexOf(quote);
+            if (endQuoteIndex > -1) {
+                // 获取下一个引号之前的内容作为属性值
+                value = context.source.slice(0, endQuoteIndex);
+                // 消费属性值
+                advanceBy(value.length);
+                // 消费引号
+                advanceBy(1);
+            } else{
+                console.error('缺少引号');
+            }
+        } else{
+            // 属性没有被引号引用
+            // 下一个空白字符之前的内容全部作为属性值
+            const match = /^[^\t\r\n\f >]+/.exec(context.source)
+            // 获取属性值
+            value = match[0];
+            // 消费属性值
+            advanceBy(value.length);
+        }
+        // 消费引号后的空白字符
+        advanceSpaces()
+
+        // 使用属性名称 + 属性值创建一个属性节点，添加到 props 数组中
+        props.push({
+            type: 'Attribute',
+            name,
+            value
+        })
+    }
+
+    // 将解析结果返回
+    return props;
 }

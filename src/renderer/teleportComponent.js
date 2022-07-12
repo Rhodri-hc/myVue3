@@ -42,7 +42,7 @@ function render(){
     return {
         type: Teleport,
         children:[
-            { type: 'h1', children: 'title' }
+            { type: 'h1', children: 'title' },
             { type: 'p', children: 'content' }
         ]
         

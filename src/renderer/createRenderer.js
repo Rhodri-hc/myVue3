@@ -584,6 +584,8 @@ function createRenderer(options) {
         const oldProps = n1.props;
         const newProps = n2.props;
 
+        // 此处需要进行判断更新是否存在动态节点
+
         // 第一步：更新props
         for (const key in newProps) {
             if (newProps[key] !== oldProps[key]) {
@@ -596,8 +598,27 @@ function createRenderer(options) {
             }
         }
 
-        // 第二步：更新children
-        patchChildren(n1, n2, el)
+        // 存在动态节点
+        if (n2.dynamicChildren) {
+            // 只更新动态节点
+            patchBlockChildren(n1, n2)
+        } else {
+            // 第二步：更新children
+            patchChildren(n1, n2, el)
+        }
+
+    }
+
+    /**
+    * @desc 更新动态节点
+    * @author 张和潮
+    * @date 2022年07月12日 15:49:36
+    */
+    function patchBlockChildren(n1, n2) {
+        // 只更新动态节点
+        for (let i = 0; i < n2.dynamicChildren.length; i++) {
+            patchElement(n1.dynamicChildren[i], n2.dynamicChildren[i])
+        }
     }
 
     /**

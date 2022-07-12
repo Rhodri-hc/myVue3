@@ -1,8 +1,10 @@
 /**
  * 编译优化：
  * 1、动态节点
- * 2、静态节点
- * 3、
+ * 2、静态提升
+ * 3、预字符串化
+ * 4、缓存内联事件处理函数
+ * 5、v-once
  * 
  */
 
@@ -92,3 +94,45 @@ function closeBlock() {
 }
 
 /********* 动态节点收集***********/
+
+
+/********* 静态提升  ***********
+ * 
+ 对于纯静态节点，将其提升到渲染函数外，在渲染函数内只会持有对静态节点的引用。
+ 当响应式数据变化，并使得渲染函数重新渲染时，并不会重新创建静态的虚拟节点，从而
+ 避免了额外的性能开销。
+
+******** 静态提升  ************/
+
+/********* 缓存内联事件处理函数 ***********/
+
+const cache = []
+function render(ctx, cache) {
+    return h(Comp, {
+        // 将内联时间处理函数缓存到 cache 数组中
+        onchange: cache[0] || (cache[0] = ($event) => {
+            return ctx.a + ctx.b
+        })
+    })
+}
+
+/********* 缓存内联事件处理函数 ***********/
+
+
+/********* v-once ***********/
+// <div>
+//   <div v-once>{{ foo }}</div>
+// </div>
+
+function render(ctx, cache) {
+    return (openBlock(), createBlock('div', null, [
+        cache[1] || (
+            setBlockTracking(-1), // 阻止这段VNode 被Block 收集
+            cache[1] = h('div', null, ctx.foo, 1),
+            setBlockTracking(1),  // 恢复
+            cache[1] // 整个表达式的值
+        )
+    ]))
+}
+
+/********* v-once ***********/

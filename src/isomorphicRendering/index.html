@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>同构渲染</title>
+
+    <style>
+        .bg{
+            background: #abcdef;
+        } 
+        .textColor{
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <!-- <script src="../responsive/reactive.js"></script> -->
+    <!-- <script src="../responsive/ref.js"></script> -->
+    <!-- <script src="./createRenderer.js"></script> -->
+    <script src="./render.js"></script>
+  
+    <script>
+        // // 采用浏览器渲染配置创建渲染器
+        // const { render } = createRenderer(BROWSER_RENDER_CONFIG)
+
+        // render(vNode, document.querySelector('#app'))
+
+        // vnode
+        const ElementVNode = {
+            type: 'div',
+            props: {
+                id: 'foo',
+            },
+            children: [
+                { type: 'p', children: 'hello' }
+            ]
+        }
+
+        const html = renderElementVNode(ElementVNode)
+
+        const app = document.querySelector('#app')
+
+        app.innerHTML = html
+
+
+
+
+       
+     
+    </script>
+</body>
+</html>

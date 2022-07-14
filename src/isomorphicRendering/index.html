@@ -29,18 +29,37 @@
 
         // render(vNode, document.querySelector('#app'))
 
-        // vnode
-        const ElementVNode = {
-            type: 'div',
-            props: {
-                id: 'foo',
-            },
-            children: [
-                { type: 'p', children: 'hello' }
-            ]
+        // // element vnode
+        // const ElementVNode = {
+        //     type: 'div',
+        //     props: {
+        //         id: 'foo',
+        //     },
+        //     children: [
+        //         { type: 'p', children: 'hello' }
+        //     ]
+        // }
+
+        // const html = renderElementVNode(ElementVNode)
+
+
+        // 组件
+        const MyComponent = {
+            setup(){
+                return () => {
+                    return {
+                        type: 'div',
+                        children: "hello1"
+                    }
+                }
+            }
         }
 
-        const html = renderElementVNode(ElementVNode)
+        const CompVNode = {
+            type: MyComponent
+        }
+
+        const html = renderComponentVNode(CompVNode)
 
         const app = document.querySelector('#app')
 

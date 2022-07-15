@@ -458,15 +458,22 @@ function createRenderer(options) {
         // 生命周期函数调用时要绑定渲染上下文对象
         created && created.call(renderContext);
 
-        effect(() => {
+        instance.upadte = effect(() => {
             // 执行渲染函数你，获取组件要渲染的内容，即render 函数返回的虚拟DOM
             const subTree = render.call(renderContext, state);
             // 检查组件是否已经被挂载
             if (!instance.isMounted) {
                 beforeMount && beforeMount();
 
-                // 初次挂载
-                patch(null, subTree, container, anchor);
+                // 如果vnode.el 存在，则意味着要执行激活
+                if (vnode.el) {
+                    // 直接调用 hydrateNode 完成激活
+                    hydrateNode(vnode.el, subTree)
+                }else{
+                    // 初次挂载
+                    patch(null, subTree, container, anchor);
+                }
+
 
                 instance.mounted && instance.mounted.forEach(hook => hook.call(renderContext));
 
@@ -1177,8 +1184,66 @@ function createRenderer(options) {
     
     }
 
+    /**
+    * @desc 用于更新同构渲染
+    * @author 张和潮
+    * @date 2022年07月15日 20:36
+    */
     function hydrate(vNode, container) {
-   
+        // 从容器元素的第一个子节点开始
+        hydrateNode(container.firstChild, vNode)
+    }
+
+    function hydrateNode(node, vnode) {
+        const { type } = vnode;
+        // 1、让 vnode.el 引入真实DOM
+        vnode.el = node;
+
+        // 2、检查虚拟DOM 的类型，如果是组件，则调用 mountComponent 函数完成激活
+        if (typeof type === 'object') {
+            mountComponent(vnode, node, null);
+        }else if(typeof type === 'string'){
+            // 3、检查真实DOM 的类型与虚拟 DOM 的类型是否匹配
+            if (node.nodeType !== 1) {
+                console.error('mismatch');
+                console.error('服务端渲染的真实 DOM 节点是：', node);
+                console.error('客户端渲染的虚拟 DOM 节点是：', vnode);
+            }else{
+                // 4、如果是普通元素，则调用 hydrateElement 完成激活
+                hydrateElement(node, vnode);
+            }
+        }
+
+        // 5、重要：hydrateNode 函数需要返回当前节点的下一个兄弟节点，以便继续进行后续的激活操作
+        return node.nextSibling;
+    }
+
+    /**
+    * @desc 激活普通元素的类型的节点
+    * @author 张和潮
+    * @date 2022年07月15日 21:53
+    */
+    function hydrateElement(el, vnode) {
+        // 1、为DOM 元素添加事件
+        if (vnode.props) {
+            for (const key in vnode.props) {
+                // 只有事件类型的 props 需要处理
+                if (/^on/.test(key)) {
+                    patchProps(el, key, null, vnode.props[key])
+                }
+            }
+        }
+        // 递归地激活子节点
+        if (Array.isArray(vnode.children)) {
+            // 从一个子节点开始
+            let nextNode = el.firstChild;
+            const len = vnode.children.length
+            for (let i = 0; i < len; i++) {
+                // 激活子节点，注意，每当激活一个子节点，hydrateNode 函数都会返回当前子节点的下一个兄弟节点、
+                // 于是可以进行后续的激活
+                nextNode = hydrateNode(nextNode, vnode.children[i])
+            }
+        }
     }
 
     return {

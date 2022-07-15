@@ -18,14 +18,14 @@
 <body>
     <div id="app"></div>
 
-    <!-- <script src="../responsive/reactive.js"></script> -->
-    <!-- <script src="../responsive/ref.js"></script> -->
-    <!-- <script src="./createRenderer.js"></script> -->
+    <script src="../responsive/reactive.js"></script>
+    <script src="../responsive/ref.js"></script>
+    <script src="../renderer/createRenderer.js"></script>
     <script src="./render.js"></script>
   
     <script>
-        // // 采用浏览器渲染配置创建渲染器
-        // const { render } = createRenderer(BROWSER_RENDER_CONFIG)
+        // 采用浏览器渲染配置创建渲染器
+        const { hydrate } = createRenderer(BROWSER_RENDER_CONFIG)
 
         // render(vNode, document.querySelector('#app'))
 
@@ -44,7 +44,7 @@
 
 
         // 组件
-        const MyComponent = {
+        const myComponent = {
             setup(){
                 return () => {
                     return {
@@ -55,17 +55,18 @@
             }
         }
 
-        const CompVNode = {
-            type: MyComponent
+        const compVNode = {
+            type: myComponent
         }
 
-        const html = renderComponentVNode(CompVNode)
+        const html = renderComponentVNode(compVNode)
 
         const app = document.querySelector('#app')
 
         app.innerHTML = html
 
-
+        // 激活
+        hydrate(compVNode, app)
 
 
        
